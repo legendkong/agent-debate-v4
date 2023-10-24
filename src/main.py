@@ -6,6 +6,15 @@ from src.webdriver_util import start_driver
 from src.openai_util import strict_output
 from src.scraping_util import extract_unique_urls, get_root_url, spaced_text, view_url
 
+
+# Definition of a topic to be discussed
+# topic = """
+# The SAP customer has set up a MS SQL database which captures IoT data from sensors about a coal washery process. They use S/4HANA 2021 which is on-premise.
+# This data contains information about consumed materials and their quantity during the washery process as well as by-products and the coal itself that is produced by it.
+# The customer wants to use this data to confirm their S/4HANA Process Order through an API. The customer is interested to have a simple, stable and low cost solution to be set up.
+# Outline the application architecture, API to be used and potential BTP services. Discuss in the team.
+# """
+
 # Load environment variables
 load_dotenv()
 
@@ -14,9 +23,22 @@ openai.api_key = os.getenv('OPENAI_API_TOKEN')
 api_key = os.getenv('CUSTOM_JSON_API_KEY')
 cx = os.getenv('GOOGLE_PROGRAMMABLE_SEARCH_ENGINE')
 
-driver = start_driver()
+###############################
+# User Interaction (Customer Agent)
+###############################
+# Customer agent (to gather user input)
+def gather_user_input():
+    """Gather input from the user (representing the customer agent)."""
+    user_query = input("Customer Agent: Please ask your consulting question and let our team handle the rest:\n")
+    return user_query
 
-res = strict_output(system_prompt = f'''You are a helpful assistant meant to design google web queries to find information. Give {num_google_queries} suitable queries to get information corresponding to what the user wants.''',
+consulting_question = gather_user_input()
+
+
+###############################
+# SAP BTP EXPERT AGENT
+###############################
+res = strict_output(system_prompt = f'''Act like you are a SAP BTP expert meant to design google web queries to find information about SAP BTP related stuff. Give {num_google_queries} suitable queries to get information corresponding to what the user wants.''',
                     user_prompt = f'''Base Query: {query}, Output Format: {output_format}''', 
                     output_format = {"query"+str(i):"query text" for i in range(num_google_queries)},
                     output_value_only = True)
@@ -27,7 +49,7 @@ if num_google_queries == 1:
 print(search_terms)
 
 # Get the search results from google 
-# NOTE: Do not run this cell too often, you only have 100 search API calls a day!
+# the free api only has 100 search API calls a day so we need to limit the number of search terms
 
 datalist = []
 # this is for the first 10 sites for each search term
@@ -36,11 +58,18 @@ for search_term in search_terms:
     response = requests.get(f'https://www.googleapis.com/customsearch/v1?key={api_key}&cx={cx}&q={search_term}')
     
     # Extract the relevant information from the response
-    data = response.json()
+    # data = response.json()
+    
+     # Error handling for invalid JSON response
+    try:
+        data = json.loads(response.text)
+    except json.JSONDecodeError:
+        print("Received invalid JSON or no data for the search term:", search_term)
+        continue  # Skip processing this search term
     
     datalist.append(data)
 
-# this one is for the next 10 sites for each search term
+# this one is for the next 10 sites for each search term (only if twenty is set to true)
 if twenty:
     for search_term in search_terms:
         # Send a GET request to the Custom Search API
@@ -58,6 +87,8 @@ for num, data in enumerate(datalist):
     print(f'Doing split {num+1} out of {len(datalist)}, search term: {search_terms[num%len(search_terms)]}')
     # Process the search results and get list of secondary sources
     items = data.get('items', [])
+    # limit items to top 5 hits
+    items = items[:5]
     for item in items:
         title = item.get('title')
         snippet = item.get('snippet')
@@ -75,7 +106,8 @@ for num, data in enumerate(datalist):
         mainurllist.append(url)
         
         ## Secondary Links from primary link
-        new_urls = extract_unique_urls(url, unwanted_url = unwanted_url, keyword_list = keyword_list)
+        max_secondary_urls = 5
+        new_urls = extract_unique_urls(url, unwanted_url = unwanted_url, keyword_list = keyword_list)[:max_secondary_urls]
         print(f'Main url: {url}, Secondary url: {new_urls}')
         for new_url in new_urls:
             # if url has been done before, skip it
@@ -83,7 +115,7 @@ for num, data in enumerate(datalist):
             # populate the new url dictionary
             urldict[new_url] = title
 
-# print(urldict)
+print(urldict)
 
 print('Original main search url numbers:', len(mainurllist))
 print('Original total search url numbers:', len(urldict))
@@ -136,4 +168,98 @@ impturl = list(newurldict.keys())
 
 impturl
 
-# TO DO: Get the data from the curated list
+####################################
+# Get the content from the websites
+####################################
+
+# Start selenium driver, parse through websites from curated website list and get data
+driver = start_driver()
+
+# if we start from scatch, reset content
+content = {}
+irrelevant_url = []
+currentnum = 0
+
+## Get the data from the websites
+for num, url in enumerate(impturl):
+    
+    # to help in case we have runtime error, simply continue from those that have been done
+    if num < currentnum: continue
+    currentnum = max(num, currentnum)
+    
+    print(url, f'(URL #{num+1} of {len(impturl)})')
+    text_content = view_url(url, driver=driver)
+    
+    # filter the text into manageable bits for the parser
+    text_splitter = TokenTextSplitter(chunk_size=MAX_TOKENS, chunk_overlap=100)
+    texts = text_splitter.split_text(text_content)
+    
+    # root_url = get_root_url(url)
+    root_url = url
+    
+    # We only cap the number of chunks per site to be 4
+    for text in texts[:4]:
+        existing_entry = 'None'
+        if root_url in content:
+            existing_entry = content[root_url]
+
+        # Use GPT-3.5-turbo to get information from website
+        res = strict_output(system_prompt = f'''Act like you are a SAP BTP expert to find information about SAP BTP related stuff based on user query, and extract information from text that is related to {consulting_question}. If there is existing data, add on to it.
+Each field in Existing Data should have a maximum of 50 words. If you are unsure about any of the output fields, output {NO_INFO}''',
+                            user_prompt = f'''Url: {url}, Existing Data: {existing_entry}, Text: {text}''', 
+                            output_format = output_format)
+        
+        if res=={}:
+            print('Empty JSON output'); break
+        if res.get(base_index) == NO_INFO: 
+            print('Information not relevant')
+            irrelevant_url.append(url)
+            break
+            
+        content[root_url] = res
+        print(res)
+        
+        
+# make the content such that it merges all the available content together
+final_content = {}
+final_content_sources = {}
+for key, value in content.items():
+    name = value[base_index]
+    # add the webpage to the source
+    if name not in final_content_sources:
+        final_content_sources[name] = [key]
+    else:
+        final_content_sources[name].append(key)
+    
+    if name not in final_content:
+        final_content[name] = value
+    else:
+        # use GPT to match both outputs together
+        existingvalue = final_content[name]
+        currentvalue = name
+        res = strict_output(system_prompt = f'''You are a helpful assistant assistant meant to combine two sources of information together factually.
+If you are not sure about any of the output fields, output {NO_INFO}"''',
+            user_prompt = f'''Source 1: {existingvalue}, Source 2: {currentvalue}''', 
+            output_format = output_format)
+        print(f'Combining outputs for {name}\nConsolidated Output: {res}')
+        final_content[name] = res
+        
+# update the main dictionary with the information sources
+for key in final_content.keys():
+    final_content[key]['info_sources'] = str(final_content_sources[key]).replace('\'',' ').replace('[','').replace(']','').replace(',','')
+
+# Curate final output to see if sources are relevant
+curated_final_content = {}
+for key, value in final_content.items():
+    res = strict_output(system_prompt = f'''You are a helpful assistant meant to see if a user input is relevant for the query: "{query}"
+Output whether or not it is relevant.''',
+        user_prompt = f'''{value}''', 
+        output_format = {"Relevance": ["3: user input matches almost all of the query", 
+                         "2: user input matches more than half of the query",
+                         "1: user input matches at least one part of the query",
+                         "0: user input does not any part of the query"]})
+    if res == {}: continue
+    value['Relevance'] = res['Relevance']
+    curated_final_content[key] = value
+    print(value)
+    print(res['Relevance'])
