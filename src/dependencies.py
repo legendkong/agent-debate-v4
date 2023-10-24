@@ -12,7 +12,13 @@ import re
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 
-# Base hyperparameters here (No need to adjust)
+# Base hyperparameters here
+
+# No information default
 NO_INFO = "No info"
+
+# Max token length for chatgpt
 MAX_TOKENS = 3000
+
+# max timeout to wait for url opening (let js elements load up in selenium web browser)
 timeout = 2
