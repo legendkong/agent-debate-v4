@@ -1,5 +1,9 @@
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.service import Service as FirefoxService
+
+geckodriver_path = r"C:\Users\I742564\Downloads\geckodriver-v0.33.0-win64\geckodriver.exe"
+firefox_service = FirefoxService(executable_path=geckodriver_path)
 
 def start_driver():
     try:
@@ -20,6 +24,6 @@ def start_driver():
     options.add_argument('--ignore-certificate-errors')
 
     # initialize a browser
-    driver = webdriver.Firefox(options=options)
+    driver = webdriver.Firefox(service=firefox_service, options=options)
     print('Driver initialized:', driver)
     return driver
