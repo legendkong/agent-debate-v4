@@ -8,7 +8,7 @@ import re
 
 
 def extract_unique_urls(url, unwanted_url=[], keyword_list=[]):
-#  Given the original url, find out the urls containted on that page which are unique and contain the keyword.
+#  Given the original url, find out the urls contained on that page which are unique and contain the keyword.
     try:
         response = requests.get(url, timeout=timeout)
     except Exception as e:
@@ -43,7 +43,7 @@ def extract_unique_urls(url, unwanted_url=[], keyword_list=[]):
     # Process the URLs or print the list
     return list(set(url_list))
 
-
+# get first domain of url (www.sap.com -> sap) (not used)
 def get_root_url(url):
     parsed_url = urlparse(url)
     root_url = parsed_url.scheme + '://' + parsed_url.netloc
@@ -58,8 +58,8 @@ def view_url(url, driver, timeout = timeout):
         # Get the webpage
         driver.get(url)
 
-        # Let's wait for the JavaScript to run with an implicit wait
-        # Here we wait up to timeout seconds for the elements to become available
+        # wait for the JavaScript to run with an implicit wait
+        # we wait up to timeout seconds for the elements to become available
         driver.implicitly_wait(timeout)
 
         # Get the page source and parse it with BeautifulSoup
@@ -71,6 +71,7 @@ def view_url(url, driver, timeout = timeout):
         # soup = BeautifulSoup(response.text, 'html.parser')
         
         # Extract metadata information
+        # sometimes impt when metadata describes pictures
         text_content = 'Metadata:\n'
         meta_tags = soup.find_all("meta")
         for meta_tag in meta_tags:
