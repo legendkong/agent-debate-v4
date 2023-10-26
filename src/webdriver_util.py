@@ -2,6 +2,10 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.service import Service as FirefoxService
 
+
+# To start a headless browser
+# This util file will be used for scraping all web pages
+
 geckodriver_path = r"C:\Users\I742564\Downloads\geckodriver-v0.33.0-win64\geckodriver.exe"
 firefox_service = FirefoxService(executable_path=geckodriver_path)
 
