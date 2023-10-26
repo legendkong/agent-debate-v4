@@ -18,20 +18,22 @@ cx = os.getenv('GOOGLE_PROGRAMMABLE_SEARCH_ENGINE')
 ###############################
 # SAP BTP EXPERT AGENT
 ###############################
-def SAPBTPExpert(consulting_question):
+def SAPBTPExpert(btp_expert_task):
     
     res = strict_output(system_prompt = f'''You are a helpful assistant meant to help
                         the SAP BTP expert to design google 
                         web queries to find information about SAP BTP related stuff. 
                         Give {num_google_queries} suitable queries to get information corresponding 
-                        to what the senior consultant assigned you.''',
-                        user_prompt = f'''Base Query: {consulting_question}, Output Format: {output_format}''', 
+                        to what the senior consultant assigned you to do.''',
+                        user_prompt = f'''Base Query: {btp_expert_task}, Output Format: {output_format}''', 
                         output_format = {"query"+str(i):"query text" for i in range(num_google_queries)},
                         output_value_only = True)
 
     search_terms = res
     if num_google_queries == 1:
         search_terms = [search_terms]
+    print()
+    print("SAP BTP Expert is cracking his head and thinking of the best queries to find the information ...")
     print(search_terms)
 
     # Get the search results from google 
@@ -52,7 +54,7 @@ def SAPBTPExpert(consulting_question):
         #     data = json.loads(response.text)
         # except json.JSONDecodeError:
         #     print("Received invalid JSON or no data for the search term:", search_term)
-        #     continue  # Skip processing this search term
+        #     continue
         # datalist.append(data)
 
     # this one is for the next 10 sites for each search term (only if twenty is set to true)
@@ -200,7 +202,7 @@ def SAPBTPExpert(consulting_question):
         # root_url = get_root_url(url)
         root_url = url
         
-        # We only cap the number of chunks per site to be 4
+        # Cap the number of chunks per site to be 4
         for text in texts[:4]:
             existing_entry = 'None'
             if root_url in content:
@@ -209,7 +211,7 @@ def SAPBTPExpert(consulting_question):
             # Use GPT-3.5-turbo to get information from website
             res = strict_output(system_prompt = f'''You are a SAP BTP expert meant to find information 
                                 and solutions based on the task assigned by the senior consultant. 
-                                Extract information from text that is related to {consulting_question}. 
+                                Extract information from text that is related to {btp_expert_task}. 
                                 If there is existing data, add on to it.
                                 Each field in Existing Data should have a maximum of 50 words. 
                                 If you are unsure about any of the output fields, output {NO_INFO}''',
@@ -264,7 +266,7 @@ def SAPBTPExpert(consulting_question):
         #                     input is relevant for the query: "{query}"
         #                     Output whether or not it is relevant.''',
         res = strict_output(system_prompt = f'''You are a SAP BTP expert meant to see if a user 
-                            input is relevant for the query: "{consulting_question}"
+                            input is relevant for the query: "{btp_expert_task}"
                             Output whether or not it is relevant.''',
             user_prompt = f'''{value}''', 
             output_format = {"Relevance": ["3: user input matches almost all of the query", 

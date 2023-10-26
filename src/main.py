@@ -7,6 +7,7 @@ from src.openai_util import strict_output
 from src.simpleopenai_util import simple_output
 from src.scraping_util import extract_unique_urls, get_root_url, spaced_text, view_url
 from agents.SAPBTPExpert import SAPBTPExpert
+from agents.SAPSeniorConsultant import SAPSeniorConsultant
 
 # Definition of a topic to be discussed
 # topic = """
@@ -35,10 +36,16 @@ def gather_user_input():
 
 
 def main():
-    consulting_question = gather_user_input()
-    curated_content = SAPBTPExpert(consulting_question)
+    # consulting_question = gather_user_input()
+    # curated_content = SAPBTPExpert(consulting_question)
     
     # print(curated_content)
+    # SAPSeniorConsultant()
+    btp_expert_task, solutions_architect_task = SAPSeniorConsultant()
+    SAPBTPExpert(btp_expert_task)
+    
+    
+    
     
 if __name__ == "__main__":
     main()

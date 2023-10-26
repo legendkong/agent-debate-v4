@@ -36,5 +36,6 @@ output_format = {
     "Should be assigned to" : "Who should be assigned to do this step",
 }
 
+
 # Base index. When doing the final table, what will be the reference to merge entries
 base_index = "Description"
