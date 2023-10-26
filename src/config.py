@@ -1,13 +1,13 @@
 # Query format
-query = 'SAP BTP information'
+# query = 'SAP BTP related information'
 
 # Keywords to be contained in secondary sites.
 # Will add url to list if any one matches. Secondary sites defined as links that are on the urls from Google Search
 # If want to take out all secondary sites, set to empty list
-keyword_list = ['btp', 'cloud platform', 'sap', 'help', 'cloud foundry', 'ABAP', 'Kyma']
+keyword_list = ['sap', 'btp', 'cloud', 'hana', 'abap','fiori', 'sapbtp', 'sap btp', 'sap cloud platform', 'sap cloud', 'sap hana', 'sap abap', 'sapui5', 'sap fiori']
 
 # Unwanted url segments. Any url with these inside usually means proprietary sites, or irrelevant (job) sites
-unwanted_url = []
+unwanted_url = ['linkedin', 'twitter', 'youtube', 'facebook', 'indeed', 'glassdoor', 'monster', 'career', 'job', 'jobs', 'recruit', 'recruitment', 'recruiter', 'hiring', 'apply', 'career']
 
 # Number of secondary urls to extract each site. GPT will pick the most relevant ones
 max_url_per_site = 3
@@ -30,9 +30,11 @@ twenty = False
 # }
 
 output_format = {
-    "Step Number" : "Information of the step",
+    "Step Number" : "Summary of the step",
+    "Description" : "A full description of the step",
     "Source" : "Source of information, including website source <website url> and date published",
+    "Should be assigned to" : "Who should be assigned to do this step",
 }
 
 # Base index. When doing the final table, what will be the reference to merge entries
-base_index = "Step Number"
+base_index = "Description"
