@@ -4,7 +4,7 @@ import json
 
 # strict json framework
 def strict_output(system_prompt, user_prompt, output_format, default_category="", output_value_only=False,
-                  model='gpt-3.5-turbo', temperature=0, num_tries=2, verbose=False):
+                  model='gpt-3.5-turbo-16k', temperature=0, num_tries=2, verbose=False):
     
 #   Ensures that OpenAI will always adhere to the desired output json format. 
 #   Uses rule-based iterative feedback to ask GPT to self-correct.
