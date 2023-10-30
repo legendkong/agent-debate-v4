@@ -8,6 +8,7 @@ import re
 
 
 def extract_unique_urls(url, unwanted_url=[], keyword_list=[]):
+#  For secondary sites URL
 #  Given the original url, find out the urls contained on that page which are unique and contain the keyword.
     try:
         response = requests.get(url, timeout=timeout)

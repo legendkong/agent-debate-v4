@@ -21,7 +21,7 @@ from agents.SAPSeniorConsultant import SAPSeniorConsultant
 load_dotenv()
 
 # Access environment variables as follows:
-openai.api_key = os.getenv('OPENAI_API_TOKEN')
+openai.api_key = os.getenv('OPENAI_API_TOKEN') 
 api_key = os.getenv('CUSTOM_JSON_API_KEY')
 cx = os.getenv('GOOGLE_PROGRAMMABLE_SEARCH_ENGINE')
 
