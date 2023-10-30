@@ -1,7 +1,7 @@
 import os
 from src.dependencies import *
 from dotenv import load_dotenv
-from src.config import keyword_list, unwanted_url, max_url_per_site, num_google_queries, twenty, output_format, base_index
+from src.config import keyword_list, unwanted_url, max_url_per_site, num_google_queries, twenty, output_format, base_index, curated_format
 from src.webdriver_util import start_driver
 from src.openai_util import strict_output
 from src.scraping_util import extract_unique_urls, get_root_url, spaced_text, view_url
@@ -22,7 +22,8 @@ def SAPBTPExpert(btp_expert_task):
     
     res = strict_output(system_prompt = f'''You are a helpful assistant meant to help
                         the SAP BTP expert to design google 
-                        web queries to find information about SAP BTP related stuff. 
+                        web queries to find solutions and information to address the tasks which 
+                        the Senior Consultant assigned you to do.
                         Give {num_google_queries} suitable queries to get information corresponding 
                         to what the senior consultant assigned you to do.''',
                         user_prompt = f'''Base Query: {btp_expert_task}, Output Format: {output_format}''', 
@@ -103,10 +104,10 @@ def SAPBTPExpert(btp_expert_task):
                 # populate the new url dictionary
                 urldict[new_url] = title
 
-    print(urldict)
+    # print(urldict)
 
-    print('Original main search url numbers:', len(mainurllist))
-    print('Original total search url numbers:', len(urldict))
+#     print('Original main search url numbers:', len(mainurllist))
+#     print('Original total search url numbers:', len(urldict))
     
     
     #--------  FILTERING --------#
@@ -128,10 +129,10 @@ def SAPBTPExpert(btp_expert_task):
         ## curate each site to only top max_url_per_site entries
         if len(value) > max_url_per_site:
             res = strict_output(system_prompt = f'''You are a helpful assistant meant to help
-                                the SAP BTP expert, given the urls and
-                                title of the urls and are meant to filter the urls which 
-                                match the query "{query}" into the given output format: {output_format}
-                                Return the {max_url_per_site} most relevant urls for the query "{query}"''',
+                                the SAP BTP expert with filtering. Given the urls and
+                                title of the urls, filter the urls which 
+                                match the query "{search_terms}" into the given output format: {output_format}
+                                Return the {max_url_per_site} most relevant urls for the query "{search_terms}"''',
                 user_prompt = f'''Title: {key}, URLs: {value[:50]}''',
                 output_format = {"URL_List": "URL list in a string separated by space"})
             # if fail, just pick first max_url_per_site
@@ -141,9 +142,9 @@ def SAPBTPExpert(btp_expert_task):
                 for each in value:
                     if 'http' in each: newurldict[each] = key
             else:
-                print(f'Original list: {value}')
+                # print(f'Original list: {value}')
                 value = res['URL_List'].split(' ')
-                print(f'Curated list: {value}')
+                # print(f'Curated list: {value}')
                 for each in value:
                     if 'http' in each: newurldict[each] = key
         else:
@@ -151,7 +152,7 @@ def SAPBTPExpert(btp_expert_task):
                 if 'http' in each: newurldict[each] = key
                 
                 
-    print(f'Initial curated number: {len(newurldict)}')
+    # print(f'Initial curated number: {len(newurldict)}')
     impturl = list(newurldict.keys())
 
     ## Add back urls from main google search results, as they are most beneficial
@@ -159,23 +160,25 @@ def SAPBTPExpert(btp_expert_task):
         if url not in newurldict:
             newurldict[url] = urldict[url]
             
-    print(f'Final curated number: {len(newurldict)}')
+    # print(f'Final curated number: {len(newurldict)}')
     impturl = list(newurldict.keys())
 
+    print("The most important and relevant websites:")
     print(impturl)
-    # e.g:
-#   ['https://www.cloud.sap/xxxx',
-#  'https://www.cloud.sap/yyyy',
-#  'https://www.btp.sap/zzzz',
-#  'https://www.btp.sap/bbbb',
-#  'https://www.kyma.sap/aaaa',
-#  'https://www.foundry.sap/cost-and-pricing',
-#  'https://www.btp.sap/ghhgs',
-#  'https://www.btp.sap/sasd']
+    print("SAP BTP Expert: I have found the most relevant websites to find the information you need. I will now proceed to extract the information from the websites ...")
+#     # e.g:
+# #   ['https://www.cloud.sap/xxxx',
+# #  'https://www.cloud.sap/yyyy',
+# #  'https://www.btp.sap/zzzz',
+# #  'https://www.btp.sap/bbbb',
+# #  'https://www.kyma.sap/aaaa',
+# #  'https://www.foundry.sap/cost-and-pricing',
+# #  'https://www.btp.sap/ghhgs',
+# #  'https://www.btp.sap/sasd']
 
-    ####################################
-    # Get the content from the websites (get data from curated list of websites)
-    ####################################
+#     ####################################
+#     # Get the content from the websites (get data from curated list of websites)
+#     ####################################
 
     # Start selenium driver, parse through websites from curated website list and get data
     driver = start_driver()
@@ -202,8 +205,8 @@ def SAPBTPExpert(btp_expert_task):
         # root_url = get_root_url(url)
         root_url = url
         
-        # Cap the number of chunks per site to be 4
-        for text in texts[:4]:
+        # Cap the number of chunks per site to be 5 (initially 4)
+        for text in texts[:5]:
             existing_entry = 'None'
             if root_url in content:
                 existing_entry = content[root_url]
@@ -211,12 +214,14 @@ def SAPBTPExpert(btp_expert_task):
             # Use GPT-3.5-turbo to get information from website
             res = strict_output(system_prompt = f'''You are a SAP BTP expert meant to find information 
                                 and solutions based on the task assigned by the senior consultant. 
-                                Extract information from text that is related to {btp_expert_task}. 
+                                Extract information from text that is related to {search_terms}, then list 
+                                the steps required to be taken in order to achieve what the senior consultant
+                                has assigned you to do: {btp_expert_task}.
                                 If there is existing data, add on to it.
-                                Each field in Existing Data should have a maximum of 50 words. 
+                                Limit the "Steps" field to 700 words.
                                 If you are unsure about any of the output fields, output {NO_INFO}''',
                                 user_prompt = f'''Url: {url}, Existing Data: {existing_entry}, Text: {text}''', 
-                                output_format = output_format)
+                                output_format = curated_format)
             
             if res=={}:
                 print('Empty JSON output'); break
@@ -266,15 +271,23 @@ def SAPBTPExpert(btp_expert_task):
         #                     input is relevant for the query: "{query}"
         #                     Output whether or not it is relevant.''',
         res = strict_output(system_prompt = f'''You are a SAP BTP expert meant to see if a user 
-                            input is relevant for the query: "{btp_expert_task}"
+                            input is relevant for the task: "{btp_expert_task}", which is assigned to you
+                            by your senior consultant previously.
                             Output whether or not it is relevant.''',
             user_prompt = f'''{value}''', 
-            output_format = {"Relevance": ["3: user input matches almost all of the query", 
-                            "2: user input matches more than half of the query",
-                            "1: user input matches at least one part of the query",
-                            "0: user input does not any part of the query"]})
+            output_format = {"Relevance": ["3: user input solves almost all of the task assigned", 
+                            "2: user input solves more than half of the task",
+                            "1: user input solves at least one part of the task",
+                            "0: user input does not solve any part of the task"]})
         if res == {}: continue
         value['Relevance'] = res['Relevance']
         curated_final_content[key] = value
         print(value)
         print(res['Relevance'])
+        
+        # Convert it into a document
+        # Convert dictionary to Excel spreadsheet
+        file_path = f'agent_debate_v4.xlsx'
+        df = pd.DataFrame.from_dict(curated_final_content, orient = 'index')
+        df = df.sort_values(by='Relevance', ascending=False)
+        df.to_excel(file_path, index = False)
