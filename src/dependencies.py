@@ -19,4 +19,4 @@ NO_INFO = "No info"
 MAX_TOKENS = 3000
 
 # max timeout to wait for url opening (let js elements load up in selenium web browser before extracting html)
-timeout = 2
+timeout = 40
