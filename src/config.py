@@ -3,11 +3,11 @@
 
 # Keywords to be contained in secondary sites.
 # Will add url to list if any one matches. Secondary sites defined as links that are on the urls from Google Search
-# If want to take out all secondary sites, set to empty list
-keyword_list = ['sap', 'btp', 'cloud', 'hana', 'abap','fiori', 'sapbtp', 'sap btp', 'sap cloud platform', 'sap cloud', 'sap hana', 'sap abap', 'sapui5', 'sap fiori']
+# If want to take out all secondary sites, set to empty list ['']
+keyword_list = ['sap', 'btp', 'cloud', 'hana', 'abap','fiori', 'sapbtp', 'sap btp', 'sap cloud platform', 'sap cloud', 'sap hana', 'sap abap', 'sapui5', 'sap fiori', 'api']
 
 # Unwanted url segments. Any url with these inside usually means proprietary sites, or irrelevant (job) sites
-unwanted_url = ['linkedin', 'twitter', 'youtube', 'facebook', 'indeed', 'glassdoor', 'monster', 'career', 'job', 'jobs', 'recruit', 'recruitment', 'recruiter', 'hiring', 'apply', 'career']
+unwanted_url = ['linkedin', 'instagram', 'twitter', 'youtube', 'facebook', 'indeed', 'glassdoor', 'monster', 'career', 'job', 'jobs', 'recruit', 'recruitment', 'recruiter', 'hiring', 'apply', 'career']
 
 # Number of secondary urls to extract each site. GPT will pick the most relevant ones
 max_url_per_site = 3
@@ -32,10 +32,15 @@ twenty = False
 output_format = {
     "Step Number" : "Summary of the step",
     "Description" : "A full description of the step",
-    "Source" : "Source of information, including website source <website url> and date published",
-    "Should be assigned to" : "Who should be assigned to do this step",
+    "Source" : ["Source of information, including website source <website url> and date published"]
+}
+
+curated_format = {
+    "Search term" : "Search term used to find the source",
+    "Source website": "Website of source",
+    "Steps": "Full description of the steps for the customer to execute",
 }
 
 
 # Base index. When doing the final table, what will be the reference to merge entries
-base_index = "Description"
+base_index = "Source website"
