@@ -14,12 +14,12 @@ def test_get_root_url():
 def test_view_url():
     driver = start_driver()
     # always do this to test. This website needs security clearance
-    url = 'https://discovery-center.cloud.sap/serviceCatalog/abap-environment?tab=feature&region=all'
+    url = 'https://blogs.sap.com/2023/06/19/driving-productivity-automating-process-order-confirmation-in-s-4hana/'
     out = view_url(url, driver=driver)
-    print(out[:500])
+    print(out[:10000])
 
 # Run the tests
 if __name__ == "__main__":
-    test_extract_unique_urls()
-    test_get_root_url()
+    # test_extract_unique_urls()
+    # test_get_root_url()
     test_view_url()
