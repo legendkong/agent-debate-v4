@@ -1,12 +1,14 @@
 import openai
 import re
 import json
+import requests
+from src.loadllm import token, svc_url
 
-# strict json framework
-def strict_output(system_prompt, user_prompt, output_format, default_category="", output_value_only=False,
-                  model='gpt-3.5-turbo-16k', temperature=0, num_tries=2, verbose=False):
+def strict_output(system_prompt, user_prompt, output_format, token, svc_url,
+                  default_category="", output_value_only=False,
+                  model='gpt-35-turbo-16k', temperature=0, num_tries=2, verbose=False):
     
-#   Ensures that OpenAI will always adhere to the desired output json format. 
+#   Ensures that the llm output will always adhere to the desired output json format. 
 #   Uses rule-based iterative feedback to ask GPT to self-correct.
 #   Keeps trying up to num_tries it it does not. Returns empty json if unable to after num_tries iterations.
 #   If output field is a list, will treat as a classification problem and output best classification category.
@@ -39,18 +41,38 @@ Any output key containing < and > indicates you must generate the key name to re
         # if input is in a list format, ask it to generate json in a list
         if list_input:
             output_format_prompt += '''\nGenerate a list of json, one json for each input element.'''
-            
-        # Use OpenAI to get a response
-        response = openai.ChatCompletion.create(
-          temperature = temperature,
-          model=model,
-          messages=[
-            {"role": "system", "content": system_prompt + output_format_prompt + error_msg},
-            {"role": "user", "content": str(user_prompt)}
-          ]
+        
+        # Replace the OpenAI API call with the LLM Access Service API call
+        response = requests.post(
+        f"{svc_url}/api/v1/completions",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "deployment_id": model,
+            "messages": [
+                {"role": "system", "content": system_prompt + output_format_prompt + error_msg},
+                {"role": "user", "content": str(user_prompt)}
+            ],
+            # "max_tokens": 16000,
+            "temperature": temperature,
+            "n": 1
+            }
         )
+         
+        # Check for a successful response
+        if response.status_code != 200:
+            print(f"Error: Unable to call LLM Access API. HTTP Status: {response.status_code}, Message: {response.text}")
+        else:
+            res_json = response.json()  # Convert the response object to a dictionary
+            try:
+                res = res_json['choices'][0]['message']['content'].replace('\'', '"')
+            except KeyError as e:
+                print(f"KeyError: {e} - The expected key was not found in the response JSON.")
 
-        res = response['choices'][0]['message']['content'].replace('\'', '"')
+
+        # res = response['choices'][0]['message']['content'].replace('\'', '"')
         
         # ensure that we don't replace away aprostophes in text 
         res = re.sub(r"(\w)\"(\w)", r"\1'\2", res)
