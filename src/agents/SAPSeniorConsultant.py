@@ -2,6 +2,8 @@ import os
 from dotenv import load_dotenv
 from src.dependencies import *
 from src.openai_util import strict_output
+from src.loadllm import token, svc_url
+import time
 
 ###############################
 # SAP Senior Consultant Agent 
@@ -20,7 +22,7 @@ from src.openai_util import strict_output
 load_dotenv()
 
 # Access environment variables as follows:
-openai.api_key = os.getenv('OPENAI_API_TOKEN')
+# openai.api_key = os.getenv('OPENAI_API_TOKEN')
 
 def gather_user_input():
     #  Gather input from the user (representing the customer agent).
@@ -30,6 +32,7 @@ def gather_user_input():
 
 def SAPSeniorConsultant():
     consulting_question = gather_user_input()
+    
     res = strict_output(system_prompt = f'''You are a SAP Senior Consultant with 15 years of experience. 
                         You work in a team of three; yourself as a planner/manager,and under you is
                         a SAP BTP expert and a SAP Solutions Architect.
@@ -41,7 +44,11 @@ def SAPSeniorConsultant():
                         user_prompt = f'''Customer question: {consulting_question}''', 
                         output_format = {"Scope" : "Scope of the customer's request",
                                         "SAP BTP Expert Task": "Task for the BTP Expert", 
-                                        "SAP Solutions Architect Task": "Task for the Solutions Architect"})
+                                        "SAP Solutions Architect Task": "Task for the Solutions Architect"},
+                        token=token,
+                        svc_url=svc_url,
+                        
+                        )
   
     btp_expert_task = res['SAP BTP Expert Task']
     solutions_architect_task = res['SAP Solutions Architect Task']  
@@ -54,4 +61,5 @@ def SAPSeniorConsultant():
     
     return btp_expert_task, solutions_architect_task
     
-    
+if __name__ == "__main__":
+    SAPSeniorConsultant()
