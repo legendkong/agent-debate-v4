@@ -8,6 +8,7 @@ from src.simpleopenai_util import simple_output
 from src.scraping_util import extract_unique_urls, get_root_url, spaced_text, view_url
 from agents.SAPBTPExpert import SAPBTPExpert
 from agents.SAPSeniorConsultant import SAPSeniorConsultant
+from agents.SAPSolutionsArchitect import SAPSolutionsArchitect
 
 # Definition of a topic to be discussed
 # topic = """
@@ -21,30 +22,13 @@ from agents.SAPSeniorConsultant import SAPSeniorConsultant
 load_dotenv()
 
 # Access environment variables as follows:
-openai.api_key = os.getenv('OPENAI_API_TOKEN') 
 api_key = os.getenv('CUSTOM_JSON_API_KEY')
 cx = os.getenv('GOOGLE_PROGRAMMABLE_SEARCH_ENGINE')
 
-###############################
-# User Interaction (Customer Agent)
-###############################
-# Customer agent (to gather user input)
-def gather_user_input():
-    #  Gather input from the user (representing the customer agent).
-    user_query = input("SAP Senior Consultant(15 years of experience): Hey there! Please ask your consulting question and let our team handle the rest:\n")
-    return user_query
-
-
 def main():
-    # consulting_question = gather_user_input()
-    # curated_content = SAPBTPExpert(consulting_question)
-    
-    # print(curated_content)
-    # SAPSeniorConsultant()
     btp_expert_task, solutions_architect_task = SAPSeniorConsultant()
     SAPBTPExpert(btp_expert_task)
-    
-    
+    SAPSolutionsArchitect(solutions_architect_task)
     
     
 if __name__ == "__main__":
