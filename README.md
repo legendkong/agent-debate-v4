@@ -5,7 +5,7 @@
 ## Description
 
 agent-debate-v4 aims to automate consultancy in the not so distant future.
-By orchestrating a collaborative effort among specialized agents with domain knowledge of particular topics, this app promises precise, well-researched solutions to user-provided problem statements in the realm of SAP consultancy.
+By orchestrating a collaborative effort among specialized agents with domain knowledge of particular topics, this solution promises precise, well-researched solutions to user-provided problem statements in the realm of SAP consultancy.
 
 Here's how it unfolds:
 
@@ -56,7 +56,7 @@ The SAP BTP Expert will receive the task from the SAP Senior Consultant and will
 3. Finds list of secondary sources from scraping "a href" tag
    <img src="/mdimages/btpexpert_step2.png" width="1000"> <br>
 4. Filter secondary sources using gpt
-5. Extracts relevant information according to task given by Senior Consultant
+5. Extracts relevant information according to task given by Senior Consultant (Selenium to parse through all the above websites)
    <img src="/mdimages/btpexpert_step5.png" width="1000"> <br>
    . <br>
    . <br>

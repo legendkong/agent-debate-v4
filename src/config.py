@@ -18,17 +18,6 @@ num_google_queries = 2
 # Whether to take top 20 search results (default is 10)
 twenty = False
 
-# Output format. Key is the name of the spreadsheet header, Value is the description of what is to be there
-# output_format = {
-#     "Course Name": "Name of course",
-#     "Course Website": "Website of course",
-#     "Broad Course Description": "Description of course",
-#     "Cost": "Amount of Money for Course",
-#     "Time": "Expected amount of time",
-#     "Venue": ["Physical <location>", "Online <website url>"],
-#     "Company": "Company offering the course"
-# }
-
 output_format = {
     "Step Number" : "Summary of the step",
     "Description" : "A full description of the step",
@@ -40,7 +29,6 @@ curated_format = {
     "Source website": "Website of source",
     "Steps": "Full description of the steps for the customer to execute"
 }
-
 
 # Base index. When doing the final table, what will be the reference to merge entries
 base_index = "Source website"

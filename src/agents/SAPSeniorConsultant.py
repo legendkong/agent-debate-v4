@@ -21,9 +21,6 @@ import time
 # Load environment variables
 load_dotenv()
 
-# Access environment variables as follows:
-# openai.api_key = os.getenv('OPENAI_API_TOKEN')
-
 def gather_user_input():
     #  Gather input from the user (representing the customer agent).
     user_query = input("SAP Senior Consultant(15 years of experience): Hey there! Please ask your consulting question and let our team handle the rest:\n")
