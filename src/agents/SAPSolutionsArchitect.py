@@ -6,7 +6,8 @@ import json
 
 
 ###############################
-# SAP Solutions Architect
+# SAP Solutions Architect (WIP)
+# For now, it is the same as the SAP BTP Expert.
 ###############################
 
 
