@@ -1,8 +1,8 @@
 import os
 from dotenv import load_dotenv
-from src.dependencies import *
-from src.openai_util import strict_output
-from src.loadllm import token, svc_url
+from src.config.dependencies import *
+from src.utils.openai_util import strict_output
+from src.config.loadllm import token, svc_url
 import time
 
 ###############################
@@ -44,7 +44,6 @@ def SAPSeniorConsultant():
                                         "SAP Solutions Architect Task": "Task for the Solutions Architect"},
                         token=token,
                         svc_url=svc_url,
-                        
                         )
   
     btp_expert_task = res['SAP BTP Expert Task']
