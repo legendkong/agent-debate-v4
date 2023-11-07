@@ -31,17 +31,29 @@ The SAP Senior Consultant will accept and understand the customer's problem stat
 One example customer's problem statement could be this:
 
 ```
-I have set up a MS SQL database which captures IoT data from sensors about a coal washery process. We use S/4HANA 2021 which is on-premise. The database contains information about consumed materials and their quantity during the washery process as well as by-products and the coal itself that is produced by it. I want to use this data to confirm our S/4HANA Process Order through an API. I want to have a simple, stable and low cost solution to be setup. I want to know the application architecture, API to be used and the potential BTP services.
+I have set up a MS SQL database which captures IoT data from sensors about a coal washery process.
+We use S/4HANA 2021 which is on-premise.
+The database contains information about consumed materials and their quantity during the washery process
+as well as by-products and the coal itself that is produced by it.
+I want to use this data to confirm our S/4HANA Process Order through an API.
+I want to have a simple, stable and low cost solution to be setup.
+I want to know the application architecture, API to be used and the potential BTP services.
 ```
 
 The SAP Senior Consultant will scope the problem, then decompose the problem statement into the following tasks:
 
 ```
-SAP Senior Consultant: The customer wants to use the data from their MS SQL database to confirm S/4HANA Process Orders through an API. They are looking for a simple, stable, and low-cost solution. They also want to know the application architecture, API to be used, and potential BTP services.
+SAP Senior Consultant: The customer wants to use the data from their MS SQL database to confirm S/4HANA Process Orders
+                       through an API. They are looking for a simple, stable, and low-cost solution.
+                       They also want to know the application architecture, API to be used, and potential BTP services.
 
-1. Task for the BTP Expert: The SAP BTP expert needs to evaluate the customer's requirements and recommend the appropriate BTP services that can be used to integrate the MS SQL database with S/4HANA. They should also identify the API that can be used to confirm the Process Orders.
+1. Task for the BTP Expert: The SAP BTP expert needs to evaluate the customer's requirements and recommend the appropriate BTP services
+                            that can be used to integrate the MS SQL database with S/4HANA.
+                            They should also identify the API that can be used to confirm the Process Orders.
 
-2. Task for the Solutions Architect: The SAP Solutions Architect needs to design the application architecture that will enable the integration between the MS SQL database and S/4HANA. They should consider the scalability, stability, and cost-effectiveness of the solution while designing the architecture.
+2. Task for the Solutions Architect: The SAP Solutions Architect needs to design the application architecture that will enable
+                                     the integration between the MS SQL database and S/4HANA. They should consider the scalability,
+                                     stability, and cost-effectiveness of the solution while designing the architecture.
 ```
 
 The SAP Senior Consultant will then send the tasks to the SAP BTP Expert and SAP Solutions Architect.
