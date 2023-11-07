@@ -1,13 +1,12 @@
 import os
-from src.dependencies import *
+from src.config.dependencies import *
 from dotenv import load_dotenv
-from src.config import keyword_list, unwanted_url, max_url_per_site, num_google_queries, twenty, output_format, base_index, curated_format
-from src.webdriver_util import start_driver
-from src.openai_util import strict_output
-from src.scraping_util import extract_unique_urls, get_root_url, spaced_text, view_url
-from src.loadllm import token, svc_url
+from src.config.config import keyword_list, unwanted_url, max_url_per_site, num_google_queries, twenty, output_format, base_index, curated_format
+from src.utils.webdriver_util import start_driver
+from src.utils.openai_util import strict_output
+from src.utils.scraping_util import extract_unique_urls, get_root_url, spaced_text, view_url
+from src.config.loadllm import token, svc_url
 import requests
-import time
 
 # Load environment variables
 load_dotenv()
@@ -31,13 +30,16 @@ def SAPBTPExpert(btp_expert_task):
                         Give {num_google_queries} suitable queries to get information corresponding 
                         to what the senior consultant assigned you to do.''',
                         user_prompt = f'''Base Query: {btp_expert_task}''', 
-                        output_format = {"query"+str(i):"query text" for i in range(num_google_queries)},
-                        output_value_only = True, token=token,
+                        output_format = {"query"+str(i):"query text" for i in range(num_google_queries)}, token=token,
                         svc_url=svc_url,)
 
     search_terms = res
-    if num_google_queries == 1:
-        search_terms = [search_terms]
+    # if num_google_queries == 1:
+    #     search_terms = [search_terms]
+        
+    #  At this point, search_terms is a dictionary where you need the values
+    # Convert the dictionary values to a list
+    search_terms = list(search_terms.values())  # Now search_terms is a list of query texts
     print()
     print("\033[93mSAP BTP Expert\033[0m is cracking his head and thinking of the best queries to find the information ...")
     print(search_terms)
@@ -69,8 +71,17 @@ def SAPBTPExpert(btp_expert_task):
     # Use the Google results and populate the URL dictionary
     urldict = {}
     mainurllist = []
+    print("SEARCH TERMS HERE:" + str(search_terms))
+    
+    if not search_terms:
+        raise ValueError("search_terms is empty, cannot continue.")
+    # Assuming search_terms is a list that may contain non-string elements
+    # search_terms = [str(term) for term in search_terms]
+
     for num, data in enumerate(datalist):
-        print(f'Doing split {num+1} out of {len(datalist)}, search term: {search_terms[num%len(search_terms)]}')
+        # print(f'Doing split {num+1} out of {len(datalist)}, search term: {search_terms[num%len(search_terms)]}')
+        search_term = search_terms[num % len(search_terms)]
+        print(f'Doing split {num+1} out of {len(datalist)}, search term: {search_term}')
         # Process the search results and get list of secondary sources
         items = data.get('items', [])
         # can limit items to top 5 hits
@@ -140,9 +151,9 @@ def SAPBTPExpert(btp_expert_task):
                 for each in value:
                     if 'http' in each: newurldict[each] = key
             else:
-                # print(f'Original list: {value}')
+                print(f'Original list: {value}')
                 value = res['URL_List'].split(' ')
-                # print(f'Curated list: {value}')
+                print(f'Curated list: {value}')
                 for each in value:
                     if 'http' in each: newurldict[each] = key
         else:
@@ -150,7 +161,7 @@ def SAPBTPExpert(btp_expert_task):
                 if 'http' in each: newurldict[each] = key
                 
                 
-    # print(f'Initial curated number: {len(newurldict)}')
+    print(f'Initial curated number: {len(newurldict)}')
     impturl = list(newurldict.keys())
 
     ## Add back urls from main google search results, as they are most beneficial
@@ -158,7 +169,7 @@ def SAPBTPExpert(btp_expert_task):
         if url not in newurldict:
             newurldict[url] = urldict[url]
             
-    # print(f'Final curated number: {len(newurldict)}')
+    print(f'Final curated number: {len(newurldict)}')
     impturl = list(newurldict.keys())
 
     print("\nThe most important and relevant websites:")
@@ -204,45 +215,30 @@ def SAPBTPExpert(btp_expert_task):
         root_url = url
           
         # Cap the number of chunks per site 
-        for text in texts[:50]:
+        for text in texts[:5]:
             existing_entry = 'None'
             if root_url in content:
                 existing_entry = content[root_url]
 
-            # Use GPT-3.5-turbo to get information from website
             res = strict_output(system_prompt = f'''You are a SAP BTP expert meant to find information 
-                                and solutions based on the task assigned by the senior consultant, which is:
-                                {btp_expert_task}.
-                                Extract information from the text which you think is the solution to
-                                {btp_expert_task}, and list 
-                                the steps required to be taken in order to achieve the task
-                                If there is existing data, add on to it. If the text contains the same or related problems
-                                faced by the customer, input "***** RELATED PROBLEM *****" before you list the steps.
-                                Limit the "Steps" field to 2000 words. Do not give generic answers. I want 
-                                specific answers. 
-                                If you are unsure about any of the output fields, output {NO_INFO}''',
+                                and solutions based on the task assigned by the senior consultant.
+                                Extract information from text that is related to {search_terms}, then list 
+                                the steps required to be taken in order to achieve what the senior consultant
+                                has assigned you to do, which is: {btp_expert_task}.
+                                If there is existing data, add on to it.
+                                Limit the "Steps" field to 1000 words.
+                                If you are unsure about any of the output fields, output {NO_INFO}.''',
                                 user_prompt = f'''Url: {url}, Existing Data: {existing_entry}, Text: {text}''', 
                                 output_format = curated_format, 
+                                # verbose=True,
                                 token=token,
-                                svc_url=svc_url,)
+                                svc_url=svc_url)
             
-            # # Use GPT-3.5-turbo to get information from website
-            # res = strict_output(system_prompt = f'''You are a SAP BTP expert meant to find information 
-            #                     and solutions based on the task assigned by the senior consultant.
-            #                     Extract information from text that is related to {search_terms}, then list 
-            #                     the steps required to be taken in order to achieve what the senior consultant
-            #                     has assigned you to do, which is: {btp_expert_task}.
-            #                     If there is existing data, add on to it.
-            #                     Limit the "Steps" field to 1500 words.
-            #                     If you are unsure about any of the output fields, output {NO_INFO}''',
-            #                     user_prompt = f'''Url: {url}, Existing Data: {existing_entry}, Text: {text}''', 
-            #                     output_format = curated_format, 
-            #                     token=token,
-            #                     svc_url=svc_url,)
-            
+            print("THIS IS THE RES: " + str(res))
             if res=={}:
                 print('Empty JSON output'); break
             if res.get(base_index) == NO_INFO: 
+            # if res[base_index] == NO_INFO:
                 print('Information not relevant')
                 irrelevant_url.append(url)
                 break
@@ -282,13 +278,47 @@ def SAPBTPExpert(btp_expert_task):
     for key in final_content.keys():
         final_content[key]['info_sources'] = str(final_content_sources[key]).replace('\'',' ').replace('[','').replace(']','').replace(',','')
 
-    # Curate final output to see if sources are relevant
+    # # Curate final output to see if sources are relevant
+    # curated_final_content = {}
+    # for key, value in final_content.items():
+    #     res = strict_output(system_prompt = f'''You are a SAP BTP expert meant to see if a user 
+    #                         input is relevant for the task: "{btp_expert_task}".
+    #                         Output whether or not it is relevant.''',
+    #         user_prompt = f'''{value}''', 
+    #         output_format = {"Relevance": [
+    #                         "3: user input solves almost all parts of the task", 
+    #                         "2: user input solves more than half of the task",
+    #                         "1: user input solves at least one part of the task",
+    #                         "0: user input does not solve any part of the task"
+    #                         ]},
+    #         token=token,
+    #         svc_url=svc_url)
+        
+    #     if res == {}: continue
+    #     value['Relevance'] = res['Relevance']
+    #     curated_final_content[key] = value
+    #     print(value)
+    #     print(res['Relevance'])
+        
+    #     # FOR TESTING AND READING PURPOSES
+    #     # Convert dictionary to Excel spreadsheet
+    #     file_path = f'/results/agent_debate_v4_17.xlsx'
+    #     df = pd.DataFrame.from_dict(curated_final_content, orient = 'index')
+    #     df = df.sort_values(by='Relevance', ascending=False)
+    #     df.to_excel(file_path, index = False)
+        
+    #     print("this is the curated final content: \n\n" + str(curated_final_content))
+
+    #     return curated_final_content
+    # Initialize an empty dictionary for curated final content
     curated_final_content = {}
+
+    # Process each item, assuming 'content' is your initial results
     for key, value in final_content.items():
+        # ... (your code that assigns 'res' for each content)
         res = strict_output(system_prompt = f'''You are a SAP BTP expert meant to see if a user 
-                            input is relevant for the task: "{btp_expert_task}", which is assigned to you
-                            by your senior consultant previously.
-                            Output whether or not it is relevant for the task.''',
+                            input is relevant for the task: "{btp_expert_task}".
+                            Output whether or not it is relevant.''',
             user_prompt = f'''{value}''', 
             output_format = {"Relevance": [
                             "3: user input solves almost all parts of the task", 
@@ -299,19 +329,43 @@ def SAPBTPExpert(btp_expert_task):
             token=token,
             svc_url=svc_url)
         
-        if res == {}: continue
-        value['Relevance'] = res['Relevance']
-        curated_final_content[key] = value
-        print(value)
-        print(res['Relevance'])
-        
-        # FOR TESTING AND READING PURPOSES
-        # Convert dictionary to Excel spreadsheet
-        file_path = f'agent_debate_v4_13.xlsx'
-        df = pd.DataFrame.from_dict(curated_final_content, orient = 'index')
-        df = df.sort_values(by='Relevance', ascending=False)
-        df.to_excel(file_path, index = False)
-        
-        print("this is the curated final content: \n\n" + str(curated_final_content))
 
-        return curated_final_content
+        # Check if 'res' is empty and if so, skip to the next iteration
+        if not res:
+            print(f"No relevant data for {key}.")
+            continue
+
+        # Assign relevance if present
+        if 'Relevance' in res:
+            value['Relevance'] = res['Relevance']
+            print(f"Relevance for {key}: {res['Relevance']}")
+
+        # Store the updated data
+        curated_final_content[key] = value
+
+    # After processing all items, create a DataFrame
+    df = pd.DataFrame.from_dict(curated_final_content, orient='index')
+
+    # Sort the DataFrame by 'Relevance', if that's a column in your DataFrame
+    if 'Relevance' in df.columns:
+        df = df.sort_values(by='Relevance', ascending=False)
+
+    # Define the directory and file path
+    results_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'results')
+
+    # Ensure the 'results' directory exists
+    if not os.path.exists(results_dir):
+        os.makedirs(results_dir)
+
+    # Define the full file path for the Excel file
+    file_path = os.path.join(results_dir, 'agent_debate_v4_17.xlsx')
+
+    # Save the DataFrame to an Excel file
+    df.to_excel(file_path, index=False)
+    print(f"Data saved to {file_path}")
+
+    # Print the curated final content
+    print("This is the curated final content:\n\n", curated_final_content)
+
+    # Return the curated final content from the function or main block
+    return curated_final_content
