@@ -21,14 +21,14 @@ import time
 # Load environment variables
 load_dotenv()
 
-def gather_user_input():
-    #  Gather input from the user (representing the customer agent).
-    user_query = input("SAP Senior Consultant(15 years of experience): Hey there! Please ask your consulting question and let our team handle the rest:\n")
-    return user_query
+# def gather_user_input():
+#     #  Gather input from the user (representing the customer agent).
+#     user_query = input("SAP Senior Consultant(15 years of experience): Hey there! Please ask your consulting question and let our team handle the rest:\n")
+#     return user_query
 
 
-def SAPSeniorConsultant():
-    consulting_question = gather_user_input()
+def SAPSeniorConsultant(consulting_question):
+    # consulting_question = gather_user_input()
     
     res = strict_output(system_prompt = f'''You are a SAP Senior Consultant with 15 years of experience. 
                         You work in a team of three; yourself as a planner/manager,and under you is

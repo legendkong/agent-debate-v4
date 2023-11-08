@@ -1,9 +1,7 @@
-from src.config.dependencies import *
-from src.config.config import output_format, curated_format
-from src.utils.openai_util import strict_output
-from src.config.loadllm import token, svc_url
-import json
-
+from config.dependencies import *
+from config.config import output_format, curated_format
+from utils.openai_util import strict_output
+from config.loadllm import token, svc_url
 
 ###############################
 # SAP Solutions Architect (WIP)
@@ -30,7 +28,7 @@ def SAPSolutionsArchitect(solutions_architect_task):
  
  
  
-   print(res)
+   return res
 #         # try:
 #         #     if isinstance(res, (list, dict)):  # If res is already a Python data structure
 #         #             parsed_response = res

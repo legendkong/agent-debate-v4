@@ -1,8 +1,6 @@
-import openai
 import re
-import json
 import requests
-from src.config.loadllm import token, svc_url
+from config.loadllm import token, svc_url
 
 def strict_output(system_prompt, user_prompt, output_format, token, svc_url, delimiter='###',
                   model='gpt-35-turbo', temperature=0, num_tries=1, verbose=False):
