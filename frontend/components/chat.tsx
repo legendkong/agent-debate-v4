@@ -15,8 +15,31 @@ import { useEffect, useRef, useState } from 'react'
 import { SeniorConsultantUI } from './seniorConsultantUi'
 
 type ChatMessage = {
-  sender: 'user' | 'SAP Senior Consultant'
+  sender:
+    | 'user'
+    | 'SAP Senior Consultant'
+    | 'SAP Solutions Architect'
+    | 'SAP BTP Expert'
+    | 'Error'
   text: string
+}
+
+// Helper function to determine the class based on the sender
+function determineTitleClass(sender: any) {
+  switch (sender) {
+    case 'user':
+      return 'text-purple-300'
+    case 'SAP Senior Consultant':
+      return 'text-amber-200'
+    case 'SAP Solutions Architect':
+      return 'text-blue-300'
+    case 'SAP BTP Expert':
+      return 'text-green-300'
+    case 'Error':
+      return 'text-red-300'
+    default:
+      return '' // Default case if needed
+  }
 }
 
 export function Chat() {
@@ -24,9 +47,9 @@ export function Chat() {
   const [isLoading, setIsLoading] = useState(false) // State to manage loading state
   const [messages, setMessages] = useState<ChatMessage[]>([]) // Use our ChatMessage type here
   const [result, setResult] = useState(null) // State to hold the backend response
-
   const containerRef = useRef<HTMLDivElement | null>(null)
 
+  // handle form submit
   const handleSubmit = async (event: any) => {
     event.preventDefault() // Prevent the form from causing a page refresh
     setIsLoading(true) // Start loading
@@ -36,7 +59,7 @@ export function Chat() {
     setMessages((prevMessages) => [...prevMessages, userInputMessage])
 
     try {
-      const response = await fetch(
+      const seniorConsultantResponse = await fetch(
         'http://localhost:8080/api/senior_consultant_post',
         {
           method: 'POST',
@@ -47,20 +70,24 @@ export function Chat() {
         }
       )
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+      if (!seniorConsultantResponse.ok) {
+        throw new Error(
+          `HTTP error! status: ${seniorConsultantResponse.status}`
+        )
       }
 
-      const data = await response.json()
-      console.log(data)
+      const seniorConsultantData = await seniorConsultantResponse.json()
+      console.log(seniorConsultantData)
 
       const consultantResponseMessage: ChatMessage = {
         sender: 'SAP Senior Consultant',
         // Use HTML markup for line breaks
         text: `
-          <p><strong>BTP Expert Task:</strong> ${data.btp_expert_task}</p>
+          <p><strong>Scope:</strong> ${seniorConsultantData.scope}</p>
           <br></br>
-          <p><strong>Solutions Architect Task:</strong> ${data.solutions_architect_task}</p>
+          <p><strong>BTP Expert Task:</strong> ${seniorConsultantData.btp_expert_task}</p>
+          <br></br>
+          <p><strong>Solutions Architect Task:</strong> ${seniorConsultantData.solutions_architect_task}</p>
         `
       }
 
@@ -68,11 +95,87 @@ export function Chat() {
         ...prevMessages,
         consultantResponseMessage
       ])
+      // ********** Function to handle BTP expert task independently **********
+      const handleBTPExpertTask = async (task: any) => {
+        const response = await fetch('http://localhost:8080/api/btp_expert', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ btp_expert_task: task })
+        })
+
+        if (!response.ok) {
+          throw new Error(
+            `HTTP error from BTP Expert! Status: ${response.status}`
+          )
+        }
+
+        const data = await response.json()
+        console.log('BTP EXPERT DATA:' + data)
+
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { sender: 'SAP BTP Expert', text: data.btp_expert_result }
+        ])
+      }
+      // ********** END OF BTP EXPERT API CALL **********
+
+      // ********** Function to handle Solutions Architect task independently **********
+      const handleSolutionsArchitectTask = async (task: any) => {
+        const response = await fetch(
+          'http://localhost:8080/api/solutions_architect',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ solutions_architect_task: task })
+          }
+        )
+
+        if (!response.ok) {
+          throw new Error(
+            `HTTP error from Solutions Architect! Status: ${response.status}`
+          )
+        }
+
+        const data = await response.json()
+        console.log('SOLUTIONS ARCHITECT DATA:' + data)
+
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            sender: 'SAP Solutions Architect',
+            text: data.solutions_architect_result
+          }
+        ])
+      }
+      // ********** END OF SOLUTIONS ARCHITECT API CALL **********
+
+      // Start both tasks without waiting for them to complete
+      if (seniorConsultantData.btp_expert_task) {
+        handleBTPExpertTask(seniorConsultantData.btp_expert_task).catch(
+          console.error
+        )
+      }
+      if (seniorConsultantData.solutions_architect_task) {
+        handleSolutionsArchitectTask(
+          seniorConsultantData.solutions_architect_task
+        ).catch(console.error)
+      }
     } catch (error) {
       console.error('Error during fetch:', error)
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        {
+          sender: 'Error',
+          text: 'An error occurred while processing your request.'
+        }
+      ])
     } finally {
       setIsLoading(false)
-      setInput('')
+      setInput('') // Clear input field
     }
   }
 
@@ -87,14 +190,8 @@ export function Chat() {
         {messages.map((message, index) => (
           <Card key={index} className='mb-2'>
             <CardHeader>
-              <CardTitle
-                className={
-                  message.sender === 'user'
-                    ? 'text-purple-300'
-                    : 'text-amber-200'
-                }
-              >
-                {message.sender === 'user' ? 'You' : 'SAP Senior Consultant'}
+              <CardTitle className={determineTitleClass(message.sender)}>
+                {message.sender === 'user' ? 'You' : message.sender}
               </CardTitle>
             </CardHeader>
             <CardContent
