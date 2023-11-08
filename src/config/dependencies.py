@@ -16,7 +16,7 @@ from selenium.webdriver.firefox.options import Options
 NO_INFO = "No info"
 
 # Max token length for chatgpt
-MAX_TOKENS = 4000
+MAX_TOKENS = 5000
 
 # max timeout to wait for url opening (let js elements load up in selenium web browser before extracting html)
 timeout = 40
