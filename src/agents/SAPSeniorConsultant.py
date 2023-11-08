@@ -45,17 +45,17 @@ def SAPSeniorConsultant(consulting_question):
                         token=token,
                         svc_url=svc_url,
                         )
-  
+    scope = res['Scope']
     btp_expert_task = res['SAP BTP Expert Task']
     solutions_architect_task = res['SAP Solutions Architect Task']  
      
     print()  
-    print("SAP Senior Consultant: " + res['Scope'])
+    print("SAP Senior Consultant: " + scope)
     print("\n1. Task for the BTP Expert: " +  btp_expert_task)
     print()
     print("2. Task for the Solutions Architect: " + solutions_architect_task)
     
-    return btp_expert_task, solutions_architect_task
+    return scope, btp_expert_task, solutions_architect_task
     
 if __name__ == "__main__":
     SAPSeniorConsultant()

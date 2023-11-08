@@ -22,26 +22,10 @@ def SAPSolutionsArchitect(solutions_architect_task):
                             assigned you the following task: {solutions_architect_task}.
                             You are to provide solution(s) to the task assigned to you by the SAP Senior Consultant.''',
                             user_prompt = f'''Task assigned to you: {solutions_architect_task}''', 
-                            output_format = {"Steps": "Full description of the steps for the customer to execute"},
+                            output_format = {"Solution": "Full description of the steps for the customer to execute"},
                             token=token,
                             svc_url=svc_url)
  
- 
- 
-   return res
-#         # try:
-#         #     if isinstance(res, (list, dict)):  # If res is already a Python data structure
-#         #             parsed_response = res
-#         #     else:
-#         #         parsed_response = json.loads(res)
-#         # except json.JSONDecodeError:
-#         #         print("Error: Could not parse the JSON response.")
-#         #         return None
-            
-#         # return parsed_response
-    
-#    except Exception as e:
-#        print(f"Error occurred: {e}")
-#        return None
-
-
+   steps = res['Solution']
+   print(steps)
+   return steps
