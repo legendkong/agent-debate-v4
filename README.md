@@ -1,6 +1,6 @@
 # agent-debate-v4 (WIP)
 
-<img src="/mdimages/agentdebatev4UI.png>" width="1000"> <br>
+<img src="/mdimages/agentdebatev4UI.png" width="1000"> <br>
 
 ## Description
 
