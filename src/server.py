@@ -5,6 +5,8 @@ from flask_cors import CORS
 from agents.SAPSeniorConsultant import SAPSeniorConsultant
 from agents.SAPSolutionsArchitect import SAPSolutionsArchitect
 from agents.SAPBTPExpert import SAPBTPExpert
+from agents.v2SAPSeniorConsultant import v2SAPSeniorConsultant
+from agents.v2SAPSolutionsArchitect import v2SAPSolutionsArchitect
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
@@ -69,23 +71,51 @@ def btp_expert():
     })
 
 
-# @app.route('/api/solutions_architect', methods=['POST'])
-# def solutions_architect_api():
-#     # task = request.args.get('task')  # or request.json.get('task') if you're sending it as a JSON body
-#     # task = request.json.get('task')
-#     # task = request.args.get('task')
-#     # if not task:
-#     #     return jsonify({"error": "No task provided"}), 400
+if __name__ == '__main__':
+    app.run(debug=True, port=8080)
     
-#     # result = SAPSolutionsArchitect(task)
-#     # return jsonify(result)
+# (Give critique) v2 Senior Consultant response to solutions from BTP expert and solutions architect
+@app.route('/api/v2_senior_consultant', methods=['POST'])
+def api_v2_senior_consultant():
+    data = request.get_json()
+    btp_expert_output = data.get('btp_expert_output')
+    solutions_architect_output = data.get('solutions_architect_output')
+    consulting_question = data.get('consulting_question')
+    
+    overall_feedback, needs_refinement = v2SAPSeniorConsultant(
+        consulting_question,
+        solutions_architect_output,
+        btp_expert_output
+    )
+
+    return jsonify({
+        'overall_feedback': overall_feedback,
+        'needs_refinement': needs_refinement
+    })
+    
+# # Refinement of solutions architect's output
+# @app.route('/api/refine_solutions_architect', methods=['POST'])
+# def refine_solutions_architect():
 #     data = request.get_json()
-#     task = data.get('task')
-#     if not task:
-#         return jsonify({"error": "No task provided"}), 400
+#     critique = data.get('critique')
+#     previous_output = data.get('previous_output')
     
-#     result = SAPSolutionsArchitect(task)
-#     return jsonify(result)
+#     # Logic to refine the solution architect's output
+#     refined_output = some_refinement_function(previous_output, critique)
+    
+#     return jsonify({'refined_solution': refined_output})
+
+# # Refinement of BTP expert's output
+# @app.route('/api/refine_btp_expert', methods=['POST'])
+# def refine_btp_expert():
+#     data = request.get_json()
+#     critique = data.get('critique')
+#     previous_output = data.get('previous_output')
+    
+#     # Logic to refine the BTP expert's output
+#     refined_output = some_other_refinement_function(previous_output, critique)
+    
+#     return jsonify({'refined_solution': refined_output})
 
 
 if __name__ == '__main__':
