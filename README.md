@@ -1,8 +1,10 @@
 # agent-debate-v4 (WIP)
 
-<img src="/mdimages/agent_debate_v4_agent_overview.png" width="1000"> <br>
+<img src="/mdimages/agentdebatev4UI.png>" width="1000"> <br>
 
 ## Description
+
+<img src="/mdimages/agent_debate_v4_agent_overview.png" width="1000"> <br>
 
 agent-debate-v4 aims to automate consultancy in the not so distant future.
 By orchestrating a collaborative effort among specialized agents with domain knowledge of particular topics, this solution promises precise, well-researched solutions to user-provided problem statements in the realm of SAP consultancy.
