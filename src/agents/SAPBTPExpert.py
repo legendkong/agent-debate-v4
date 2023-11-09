@@ -342,6 +342,8 @@ def SAPBTPExpert(btp_expert_task):
 
         # Store the updated data
         curated_final_content[key] = value
+        
+    driver.quit()
 
     # After processing all items, create a DataFrame
     df = pd.DataFrame.from_dict(curated_final_content, orient='index')
