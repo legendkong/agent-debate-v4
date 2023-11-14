@@ -7,6 +7,7 @@ from agents.SAPSolutionsArchitect import SAPSolutionsArchitect
 from agents.SAPBTPExpert import SAPBTPExpert
 from agents.v2SAPSeniorConsultant import v2SAPSeniorConsultant
 from agents.v2SAPSolutionsArchitect import v2SAPSolutionsArchitect
+from agents.v2SAPBTPExpert import v2SAPBTPExpert
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
@@ -70,9 +71,6 @@ def btp_expert():
         'btp_expert_result': first_result_steps
     })
 
-
-if __name__ == '__main__':
-    app.run(debug=True, port=8080)
     
 # (Give critique) v2 Senior Consultant response to solutions from BTP expert and solutions architect
 @app.route('/api/v2_senior_consultant', methods=['POST'])
@@ -92,6 +90,37 @@ def api_v2_senior_consultant():
         'overall_feedback': overall_feedback,
         'needs_refinement': needs_refinement
     })
+    
+    
+    
+@app.route('/api/refine_solutions_architect', methods=['POST'])
+def refine_solutions_architect():
+    data = request.get_json()
+    previous_solution = data.get('previous_solution')
+    critique = data.get('critique')
+    solutions_architect_task = data.get('solutions_architect_task')
+
+    if not all([previous_solution, critique, solutions_architect_task]):
+        return jsonify({"error": "Missing data for refinement"}), 400
+
+    refined_solution = v2SAPSolutionsArchitect(previous_solution, critique, solutions_architect_task)
+
+    return jsonify({'refined_solutions_architect_result': refined_solution})
+
+@app.route('/api/refine_btp_expert', methods=['POST'])
+def refine_btp_expert():
+    data = request.get_json()
+    previous_solution = data.get('previous_solution')
+    critique = data.get('critique')
+    btp_expert_task = data.get('btp_expert_task')
+
+    if not all([previous_solution, critique, btp_expert_task]):
+        return jsonify({"error": "Missing data for refinement"}), 400
+
+    refined_solution = v2SAPBTPExpert(previous_solution, critique, btp_expert_task)
+
+    return jsonify({'refined_btp_expert_result': refined_solution})
+
     
 # # Refinement of solutions architect's output
 # @app.route('/api/refine_solutions_architect', methods=['POST'])
@@ -120,3 +149,4 @@ def api_v2_senior_consultant():
 
 if __name__ == '__main__':
     app.run(debug=True, port=8080)
+
