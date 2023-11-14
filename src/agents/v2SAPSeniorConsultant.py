@@ -15,10 +15,12 @@ def v2SAPSeniorConsultant(consulting_question, solutions_architect_output, btp_e
     review = strict_output(
         system_prompt = f'''As a SAP Senior Consultant with extensive experience, 
                             review the consulting question by the customer and the 
-                            following solutions provided by your team members 
+                            following solutions provided by the Solutions Architect and BTP Expert 
                             and provide your critique. If the solutions need refinement, 
                             provide clear feedback on what needs to be changed. If there is no critique 
-                            or refinement needed from either team member, please state so. 
+                            or refinement needed from either team member, state "No refinement needed.".
+                            For example, if there is no critique or refinement needed for the BTP expert,
+                            then "Critique for BTP Expert": "No refinement needed". 
                             Consulting question: {consulting_question}
                             Solutions Architect's solution: {solutions_architect_output}
                             BTP Expert's solution: {btp_expert_output}''',
@@ -34,24 +36,32 @@ def v2SAPSeniorConsultant(consulting_question, solutions_architect_output, btp_e
     critique_for_sa = review.get('Critique for Solutions Architect', '')
     critique_for_btp = review.get('Critique for BTP Expert', '')
     
-     # Logic to handle refinement requests
-    refinement_needed_sa = "refinement needed" in critique_for_sa.lower()
-    if refinement_needed_sa:
-        # Send back refinement request to the Solutions Architect
-        # Call the SAPSolutionsArchitect function again with the critique_for_sa
-        pass  # Replace with actual logic
+    #  # Logic to handle refinement requests
+    # refinement_needed_sa = "refinement needed" in critique_for_sa.lower()
+    # if refinement_needed_sa:
+    #     # Send back refinement request to the Solutions Architect
+    #     # Call the SAPSolutionsArchitect function again with the critique_for_sa
+    #     pass  # Replace with actual logic
 
-    refinement_needed_btp = "refinement needed" in critique_for_btp.lower()
-    if refinement_needed_btp:
-        # Send back refinement request to the BTP Expert
-        # Call the SAPBTPExpert function again with the critique_for_btp
-        pass  # Replace with actual logic
-
+    # refinement_needed_btp = "refinement needed" in critique_for_btp.lower()
+    # if refinement_needed_btp:
+    #     # Send back refinement request to the BTP Expert
+    #     # Call the SAPBTPExpert function again with the critique_for_btp
+    #     pass  # Replace with actual logic
+    
+    def needs_refinement(critique):
+        return "no refinement needed" not in critique.lower()
+    
+    # Determine if refinement is needed
+    refinement_needed_sa = needs_refinement(critique_for_sa)
+    refinement_needed_btp = needs_refinement(critique_for_btp)
+    
+    
     # Compile the overall feedback including the personal statement
     overall_feedback = {
         'Personal statement': personal_statement,
-        'Solutions Architect feedback': critique_for_sa,
-        'BTP Expert feedback': critique_for_btp
+        'Critique for Solutions Architect': critique_for_sa,
+        'Critique for BTP Expert': critique_for_btp
     }
 
     # Determine if either role needs to perform refinement
