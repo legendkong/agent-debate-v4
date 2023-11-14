@@ -10,7 +10,7 @@ keyword_list = ['sap', 'blogs', 'btp', 'help' 'cloud', 'hana', 'abap','fiori', '
 unwanted_url = ['news', 'linkedin', 'instagram', 'twitter', 'youtube', 'facebook', 'indeed', 'glassdoor', 'monster', 'career', 'job', 'jobs', 'recruit', 'recruitment', 'recruiter', 'hiring', 'apply', 'career', 'people']
 
 # Number of secondary urls to extract each site. GPT will pick the most relevant ones
-max_url_per_site = 3
+max_url_per_site = 1
 
 # Number of google queries to search for. Increasing this increases the breadth of search, but we only have 100 searches a day
 num_google_queries = 1
