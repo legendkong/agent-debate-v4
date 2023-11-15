@@ -25,7 +25,7 @@ def v2SAPSeniorConsultant(consulting_question, solutions_architect_output, btp_e
                             Solutions Architect's solution: {solutions_architect_output}
                             BTP Expert's solution: {btp_expert_output}''',
         user_prompt = f'''Here are the solutions provided by the team members for the task: "{combined_summary}"''',
-        output_format = {"Personal statement": "Your personal statement on the solutions provided by the team members.",
+        output_format = {"Personal statement": "Your opinion on the solutions provided by the team members.",
                          "Critique for Solutions Architect": "Feedback and refinement requests for the Solutions Architect.",
                          "Critique for BTP Expert": "Feedback and refinement requests for the BTP Expert."},
         token=token,
