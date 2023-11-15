@@ -406,6 +406,44 @@ export function Chat() {
     }
   }
 
+  // function to handle moderation by moderator
+  const handleModeration = async () => {
+    try {
+        const response = await fetch('http://localhost:8080/api/moderate_conversation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                refinement_needed: /* Your logic to determine if refinement is needed */,
+                refinement_count: /* Your logic to count the number of refinements */
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // Add the moderator's message to the chat, if any
+        if (data.message) {
+            setMessages(prevMessages => [...prevMessages, { sender: 'Moderator', text: data.message }]);
+        }
+
+        // Here you can handle whether or not to allow further user input
+        // For example, disabling the input field
+        if (!data.allow_input) {
+            // Disable the input field or take other actions
+        }
+
+    } catch (error) {
+        console.error('Error during moderation:', error);
+        setMessages(prevMessages => [...prevMessages, { sender: 'Error', text: 'An error occurred during moderation.' }]);
+    }
+  };
+
+
   return (
     <div className='rounded-2xl border h-[75vh] flex flex-col justify-between'>
       <div className='p-6 overflow-auto' ref={containerRef}>
