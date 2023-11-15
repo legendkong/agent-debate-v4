@@ -93,6 +93,15 @@ export function Chat() {
     const userInputMessage: ChatMessage = { sender: 'user', text: input }
     setMessages((prevMessages) => [...prevMessages, userInputMessage])
 
+    // Add a loading message for Senior Consultant
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      {
+        sender: 'SAP Senior Consultant',
+        text: '🙋‍♂️🙋‍♀️ Assigning tasks ...'
+      }
+    ])
+
     try {
       const seniorConsultantResponse = await fetch(
         'http://localhost:8080/api/senior_consultant_post',
@@ -114,97 +123,227 @@ export function Chat() {
       const seniorConsultantData = await seniorConsultantResponse.json()
       console.log('Senior Consultant Data:' + seniorConsultantData)
 
-      const consultantResponseMessage: ChatMessage = {
-        sender: 'SAP Senior Consultant',
-        // Use HTML markup for line breaks
-        text: `
-          <p><strong>Scope:</strong> ${seniorConsultantData.scope}</p>
-          <br></br>
-          <p><strong>BTP Expert Task:</strong> ${seniorConsultantData.btp_expert_task}</p>
-          <br></br>
-          <p><strong>Solutions Architect Task:</strong> ${seniorConsultantData.solutions_architect_task}</p>
-        `
-      }
+      // const consultantResponseMessage: ChatMessage = {
+      //   sender: 'SAP Senior Consultant',
+      //   // Use HTML markup for line breaks
+      //   text: `
+      //     <p><strong>Scope:</strong> ${seniorConsultantData.scope}</p>
+      //     <br></br>
+      //     <p><strong>BTP Expert Task:</strong> ${seniorConsultantData.btp_expert_task}</p>
+      //     <br></br>
+      //     <p><strong>Solutions Architect Task:</strong> ${seniorConsultantData.solutions_architect_task}</p>
+      //   `
+      // }
+
+      setMessages((prevMessages) => [
+        ...prevMessages.filter(
+          (msg) => msg.text !== '🙋‍♂️🙋‍♀️ Assigning tasks ...'
+        ),
+        {
+          sender: 'SAP Senior Consultant',
+          text: `
+            <p><strong>Scope:</strong> ${seniorConsultantData.scope}</p>
+            <br></br>
+            <p><strong>BTP Expert Task:</strong> ${seniorConsultantData.btp_expert_task}</p>
+            <br></br>
+            <p><strong>Solutions Architect Task:</strong> ${seniorConsultantData.solutions_architect_task}</p>
+          `
+        }
+      ])
+
       setBTPExpertTask(seniorConsultantData.btp_expert_task)
       setSATask(seniorConsultantData.solutions_architect_task)
 
+      // setMessages((prevMessages) => [
+      //   // ...prevMessages,
+      //   // consultantResponseMessage
+
+      // ])
       setMessages((prevMessages) => [
-        ...prevMessages,
-        consultantResponseMessage
+        ...prevMessages.filter((msg) => msg.text !== '🙋‍♂️🙋‍♀️ Assigning tasks ...')
       ])
       // ********** Function to handle BTP expert task independently **********
+      // const handleBTPExpertTask = async (task: any) => {
+      //   const response = await fetch(
+      //     'http://localhost:8080/api/mock_btp_expert',
+      //     {
+      //       method: 'POST',
+      //       headers: {
+      //         'Content-Type': 'application/json'
+      //       },
+      //       body: JSON.stringify({ btp_expert_task: task })
+      //     }
+      //   )
+
+      //   if (!response.ok) {
+      //     throw new Error(
+      //       `HTTP error from BTP Expert! Status: ${response.status}`
+      //     )
+      //   }
+
+      //   const data = await response.json()
+      //   console.log('BTP EXPERT DATA:' + data.btp_expert_result)
+      //   setBtpExpertOutput(data.btp_expert_result)
+      //   setMessages((prevMessages) => [
+      //     ...prevMessages,
+      //     {
+      //       sender: 'SAP BTP Expert',
+      //       // text: formatBTPExpertResponse(data.btp_expert_result)
+      //       text: formatSolutionsArchitectResponse(data.btp_expert_result)
+      //     }
+      //   ])
+      // }
       const handleBTPExpertTask = async (task: any) => {
-        const response = await fetch(
-          'http://localhost:8080/api/mock_btp_expert',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ btp_expert_task: task })
-          }
-        )
-
-        if (!response.ok) {
-          throw new Error(
-            `HTTP error from BTP Expert! Status: ${response.status}`
-          )
-        }
-
-        const data = await response.json()
-        console.log('BTP EXPERT DATA:' + data.btp_expert_result)
-        setBtpExpertOutput(data.btp_expert_result)
+        // Add a loading message for BTP Expert
         setMessages((prevMessages) => [
           ...prevMessages,
           {
             sender: 'SAP BTP Expert',
-            // text: formatBTPExpertResponse(data.btp_expert_result)
-            text: formatSolutionsArchitectResponse(data.btp_expert_result)
+            text: '⌛️🔃 Searching for information ...'
           }
         ])
-        // ensures senior consultant review happens only after both btp expert
-        // and solutions architect outputs are available and finished their tasks
-        // if (saOutput) {
-        //   console.log('Calling Senior Consultant review from BTP Expert task')
-        //   await handleReviewBySeniorConsultant()
-        // }
+
+        try {
+          const response = await fetch(
+            'http://localhost:8080/api/mock_btp_expert',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ btp_expert_task: task })
+            }
+          )
+
+          if (!response.ok) {
+            throw new Error(
+              `HTTP error from BTP Expert! Status: ${response.status}`
+            )
+          }
+
+          const data = await response.json()
+          setBtpExpertOutput(data.btp_expert_result)
+          console.log('BTP EXPERT DATA:' + data.btp_expert_result)
+
+          // Remove the loading message and add the actual response
+          setMessages((prevMessages) => [
+            ...prevMessages.filter(
+              (msg) => msg.text !== '⌛️🔃 Searching for information ...'
+            ),
+            {
+              sender: 'SAP BTP Expert',
+              text: formatSolutionsArchitectResponse(data.btp_expert_result)
+            }
+          ])
+        } catch (error) {
+          console.error('Error from BTP Expert:', error)
+          // Update messages to show error and remove the loading message
+          setMessages((prevMessages) => [
+            ...prevMessages.filter(
+              (msg) => msg.text !== `⌛️🔃 Searching for information ... `
+            )
+          ])
+        }
       }
+
       // ********** END OF BTP EXPERT API CALL **********
 
       // ********** Function to handle Solutions Architect task independently **********
+      // const handleSolutionsArchitectTask = async (task: any) => {
+      //   const response = await fetch(
+      //     'http://localhost:8080/api/solutions_architect',
+      //     {
+      //       method: 'POST',
+      //       headers: {
+      //         'Content-Type': 'application/json'
+      //       },
+      //       body: JSON.stringify({ solutions_architect_task: task })
+      //     }
+      //   )
+
+      //   if (!response.ok) {
+      //     throw new Error(
+      //       `HTTP error from Solutions Architect! Status: ${response.status}`
+      //     )
+      //   }
+
+      //   const data = await response.json()
+      //   console.log(
+      //     'SOLUTIONS ARCHITECT DATA:' + data.solutions_architect_result
+      //   )
+      //   setSaOutput(data.solutions_architect_result)
+      //   setMessages((prevMessages) => [
+      //     ...prevMessages,
+      //     {
+      //       sender: 'SAP Solutions Architect',
+      //       text: formatSolutionsArchitectResponse(
+      //         data.solutions_architect_result
+      //       )
+      //     }
+      //   ])
+      // }
       const handleSolutionsArchitectTask = async (task: any) => {
-        const response = await fetch(
-          'http://localhost:8080/api/solutions_architect',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ solutions_architect_task: task })
-          }
-        )
-
-        if (!response.ok) {
-          throw new Error(
-            `HTTP error from Solutions Architect! Status: ${response.status}`
-          )
-        }
-
-        const data = await response.json()
-        console.log(
-          'SOLUTIONS ARCHITECT DATA:' + data.solutions_architect_result
-        )
-        setSaOutput(data.solutions_architect_result)
+        // Add a loading message for Solutions Architect
         setMessages((prevMessages) => [
           ...prevMessages,
           {
             sender: 'SAP Solutions Architect',
-            text: formatSolutionsArchitectResponse(
-              data.solutions_architect_result
-            )
+            text: '⌛️🔃 Searching for information ...'
           }
         ])
+
+        try {
+          const response = await fetch(
+            'http://localhost:8080/api/solutions_architect',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ solutions_architect_task: task })
+            }
+          )
+
+          if (!response.ok) {
+            throw new Error(
+              `HTTP error from Solutions Architect! Status: ${response.status}`
+            )
+          }
+
+          const data = await response.json()
+          console.log(
+            'SOLUTIONS ARCHITECT DATA:',
+            data.solutions_architect_result
+          )
+          setSaOutput(data.solutions_architect_result)
+
+          // Remove the loading message and add the actual response
+          setMessages((prevMessages) => [
+            ...prevMessages.filter(
+              (msg) => msg.text !== '⌛️🔃 Searching for information ...'
+            ),
+            {
+              sender: 'SAP Solutions Architect',
+              text: formatSolutionsArchitectResponse(
+                data.solutions_architect_result
+              )
+            }
+          ])
+        } catch (error) {
+          console.error('Error from Solutions Architect:', error)
+          // Update messages to show error and remove the loading message
+          setMessages((prevMessages) => [
+            ...prevMessages.filter(
+              (msg) => msg.text !== '⌛️🔃 Searching for information ...'
+            ),
+            {
+              sender: 'Error',
+              text: 'An error occurred during the Solutions Architect processing.'
+            }
+          ])
+        }
       }
+
       // ********** END OF SOLUTIONS ARCHITECT API CALL **********
 
       // Start both tasks without waiting for them to complete
@@ -249,6 +388,15 @@ export function Chat() {
       )
       return // Consider adding some user feedback here
     }
+
+    // Add a loading message for Senior Consultant
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      {
+        sender: 'SAP Senior Consultant',
+        text: '🧠 Looking through the solutions and gathering feedback ...'
+      }
+    ])
 
     try {
       const reviewResponse = await fetch(
@@ -311,7 +459,11 @@ export function Chat() {
 
       // Update the chat with the senior consultant's review
       setMessages((prevMessages) => [
-        ...prevMessages,
+        ...prevMessages.filter(
+          (msg) =>
+            msg.text !==
+            '🧠 Looking through the solutions and gathering feedback ...'
+        ),
         {
           sender: 'SAP Senior Consultant',
           text: ` 
@@ -401,7 +553,7 @@ export function Chat() {
       ])
     }
   }
-  // function to handle refinement by Solutions Architect
+  // function to handle refinement by btp expert
   const handleBTPExpertRefinement = async (critique: any) => {
     try {
       const response = await fetch(
