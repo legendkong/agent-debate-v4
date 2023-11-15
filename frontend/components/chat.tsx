@@ -22,15 +22,15 @@ type ChatMessage = {
 function determineTitleClass(sender: any) {
   switch (sender) {
     case 'user':
-      return 'text-purple-300'
+      return 'text-orange-400'
     case 'SAP Senior Consultant':
-      return 'text-amber-200'
+      return 'text-violet-400'
     case 'SAP Solutions Architect':
       return 'text-blue-300'
     case 'SAP BTP Expert':
       return 'text-green-300'
     case 'Moderator':
-      return 'text-brown-300'
+      return 'text-amber-200 bg-blue-950'
     case 'Error':
       return 'text-red-300'
     default:
@@ -50,8 +50,13 @@ function formatBTPExpertResponse(text: any) {
 function formatSolutionsArchitectResponse(text: any) {
   // This regex looks for patterns like "1.", "2.", etc., and inserts a line break before them
   let formattedText = text.replace(/(\d+)\./g, '<br /><br />$1.')
-  // Additional formatting for bullet points
-  formattedText = formattedText.replace(/ - /g, '<br />&bull; ')
+
+  // Additional formatting for bullet points with inline styling for indentation
+  formattedText = formattedText.replace(
+    / - /g,
+    '<br /><span style="padding-left: 20px;">&bull; </span>' // Inline style for indentation
+  )
+
   // Formatting for 'Note:'
   formattedText = formattedText.replace(
     /Note:/g,
@@ -64,11 +69,13 @@ export function Chat() {
   const [input, setInput] = useState('') // State to hold the input value
   const [isLoading, setIsLoading] = useState(false) // State to manage loading state
   const [messages, setMessages] = useState<ChatMessage[]>([]) // Use our ChatMessage type here
-  const containerRef = useRef<HTMLDivElement | null>(null)
   const [btpExpertOutput, setBtpExpertOutput] = useState('')
   const [saOutput, setSaOutput] = useState('')
   const [BTPExpertTask, setBTPExpertTask] = useState('')
   const [SATask, setSATask] = useState('')
+  const [isRefinementNeeded, setIsRefinementNeeded] = useState(false)
+  const [refinementCount, setRefinementCount] = useState(0)
+  const containerRef = useRef<HTMLDivElement | null>(null)
 
   // useEffect hook to trigger the review when both outputs are ready
   useEffect(() => {
@@ -127,13 +134,16 @@ export function Chat() {
       ])
       // ********** Function to handle BTP expert task independently **********
       const handleBTPExpertTask = async (task: any) => {
-        const response = await fetch('http://localhost:8080/api/btp_expert', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ btp_expert_task: task })
-        })
+        const response = await fetch(
+          'http://localhost:8080/api/mock_btp_expert',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ btp_expert_task: task })
+          }
+        )
 
         if (!response.ok) {
           throw new Error(
@@ -148,7 +158,8 @@ export function Chat() {
           ...prevMessages,
           {
             sender: 'SAP BTP Expert',
-            text: formatBTPExpertResponse(data.btp_expert_result)
+            // text: formatBTPExpertResponse(data.btp_expert_result)
+            text: formatSolutionsArchitectResponse(data.btp_expert_result)
           }
         ])
         // ensures senior consultant review happens only after both btp expert
@@ -270,6 +281,33 @@ export function Chat() {
         'Critique for SA:' +
           reviewData.overall_feedback['Critique for Solutions Architect']
       )
+      const critiqueForSA =
+        reviewData.overall_feedback['Critique for Solutions Architect']
+      const critiqueForBTP =
+        reviewData.overall_feedback['Critique for BTP Expert']
+
+      // Function to check if a string contains "no refinement needed" regardless of case and punctuation
+      const noRefinementNeeded = (critique: any) => {
+        // This regex looks for "no refinement needed" in a case-insensitive manner and allows an optional full stop at the end
+        const regex = /no refinement needed\.?/i
+        return regex.test(critique)
+      }
+
+      const refinementNeededForSA = !noRefinementNeeded(critiqueForSA)
+      const refinementNeededForBTP = !noRefinementNeeded(critiqueForBTP)
+
+      const isRefinementNeededNow =
+        refinementNeededForSA || refinementNeededForBTP
+
+      const newRefinementCount = isRefinementNeededNow
+        ? refinementCount + 1
+        : refinementCount
+      setRefinementCount(newRefinementCount)
+
+      // Decide whether to call handleModeration
+      if (!isRefinementNeededNow || newRefinementCount > 2) {
+        handleModeration()
+      }
 
       // Update the chat with the senior consultant's review
       setMessages((prevMessages) => [
@@ -343,7 +381,9 @@ export function Chat() {
         ...prevMessages,
         {
           sender: 'SAP Solutions Architect',
-          text: data.refined_solutions_architect_result
+          text: formatSolutionsArchitectResponse(
+            data.refined_solutions_architect_result
+          )
         }
       ])
       console.log(
@@ -390,7 +430,7 @@ export function Chat() {
         ...prevMessages,
         {
           sender: 'SAP BTP Expert',
-          text: data.refined_btp_expert_result
+          text: formatSolutionsArchitectResponse(data.refined_btp_expert_result)
         }
       ])
       console.log('Refined BTP expert result: ' + data.refine_btp_expert_result)
@@ -409,40 +449,47 @@ export function Chat() {
   // function to handle moderation by moderator
   const handleModeration = async () => {
     try {
-        const response = await fetch('http://localhost:8080/api/moderate_conversation', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                refinement_needed: /* Your logic to determine if refinement is needed */,
-                refinement_count: /* Your logic to count the number of refinements */
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+      const response = await fetch(
+        'http://localhost:8080/api/moderate_conversation',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            refinement_needed: isRefinementNeeded,
+            refinement_count: refinementCount
+          })
         }
+      )
 
-        const data = await response.json();
-        
-        // Add the moderator's message to the chat, if any
-        if (data.message) {
-            setMessages(prevMessages => [...prevMessages, { sender: 'Moderator', text: data.message }]);
-        }
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`)
+      }
 
-        // Here you can handle whether or not to allow further user input
-        // For example, disabling the input field
-        if (!data.allow_input) {
-            // Disable the input field or take other actions
-        }
+      const data = await response.json()
 
+      // Add the moderator's message to the chat, if any
+      if (data.message) {
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { sender: 'Moderator', text: data.message }
+        ])
+      }
+
+      // Here you can handle whether or not to allow further user input
+      // For example, disabling the input field
+      if (!data.allow_input) {
+        // Disable the input field or take other actions
+      }
     } catch (error) {
-        console.error('Error during moderation:', error);
-        setMessages(prevMessages => [...prevMessages, { sender: 'Error', text: 'An error occurred during moderation.' }]);
+      console.error('Error during moderation:', error)
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { sender: 'Error', text: 'An error occurred during moderation.' }
+      ])
     }
-  };
-
+  }
 
   return (
     <div className='rounded-2xl border h-[75vh] flex flex-col justify-between'>
@@ -450,10 +497,19 @@ export function Chat() {
         {SeniorConsultantUI()}
 
         {messages.map((message, index) => (
-          <Card key={index} className='mb-2'>
+          <Card
+            key={index}
+            className={`mb-2 ${
+              message.sender === 'Moderator' ? 'bg-blue-950' : ''
+            }`}
+          >
             <CardHeader>
               <CardTitle className={determineTitleClass(message.sender)}>
-                {message.sender === 'user' ? 'You' : message.sender}
+                {message.sender === 'user'
+                  ? 'You'
+                  : message.sender === 'Moderator'
+                  ? '👑 Moderator'
+                  : message.sender}
               </CardTitle>
             </CardHeader>
             <CardContent
