@@ -36,18 +36,6 @@ def v2SAPSeniorConsultant(consulting_question, solutions_architect_output, btp_e
     critique_for_sa = review.get('Critique for Solutions Architect', '')
     critique_for_btp = review.get('Critique for BTP Expert', '')
     
-    #  # Logic to handle refinement requests
-    # refinement_needed_sa = "refinement needed" in critique_for_sa.lower()
-    # if refinement_needed_sa:
-    #     # Send back refinement request to the Solutions Architect
-    #     # Call the SAPSolutionsArchitect function again with the critique_for_sa
-    #     pass  # Replace with actual logic
-
-    # refinement_needed_btp = "refinement needed" in critique_for_btp.lower()
-    # if refinement_needed_btp:
-    #     # Send back refinement request to the BTP Expert
-    #     # Call the SAPBTPExpert function again with the critique_for_btp
-    #     pass  # Replace with actual logic
     
     def needs_refinement(critique):
         return "no refinement needed" not in critique.lower()
@@ -69,10 +57,3 @@ def v2SAPSeniorConsultant(consulting_question, solutions_architect_output, btp_e
 
     # Return the structured feedback and a flag indicating if refinement is needed
     return overall_feedback, needs_refinement
-
-# Example usage of the function
-# feedback, needs_refinement = v2SAPSeniorConsultant(
-#     consulting_question="How can we integrate our IoT data into our SAP system?",
-#     solutions_architect_output="Solutions Architect provided solution...",
-#     btp_expert_output="BTP Expert provided solution..."
-# )
