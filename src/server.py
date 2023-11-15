@@ -8,6 +8,7 @@ from agents.SAPBTPExpert import SAPBTPExpert
 from agents.v2SAPSeniorConsultant import v2SAPSeniorConsultant
 from agents.v2SAPSolutionsArchitect import v2SAPSolutionsArchitect
 from agents.v2SAPBTPExpert import v2SAPBTPExpert
+from agents.Moderator import Moderator
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
@@ -122,6 +123,24 @@ def refine_btp_expert():
     return jsonify({'refined_btp_expert_result': refined_solution})
 
     
+# Moderator response
+@app.route('/api/moderate_conversation', methods=['POST'])
+def moderate_conversation():
+    data = request.get_json()
+    refinement_needed = data.get('refinement_needed', False)
+    refinement_count = data.get('refinement_count', 0)
+
+    message, allow_input = Moderator(refinement_needed, refinement_count)
+    return jsonify({
+        'message': message,
+        'allow_input': allow_input
+    })
+
+
+
+
+
+
 # # Refinement of solutions architect's output
 # @app.route('/api/refine_solutions_architect', methods=['POST'])
 # def refine_solutions_architect():
