@@ -9,6 +9,7 @@ from agents.v2SAPSeniorConsultant import v2SAPSeniorConsultant
 from agents.v2SAPSolutionsArchitect import v2SAPSolutionsArchitect
 from agents.v2SAPBTPExpert import v2SAPBTPExpert
 from agents.Moderator import Moderator
+from agents.mockSAPBTPExpert import mockSAPBTPExpert
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
@@ -70,6 +71,27 @@ def btp_expert():
 
     return jsonify({
         'btp_expert_result': first_result_steps
+    })
+    
+# ******************** FOR FASTER TESTING ******************* #
+# MOCK BTP expert response
+@app.route('/api/mock_btp_expert', methods=['POST'])
+def mock_btp_expert():
+    data = request.get_json()
+    btp_expert_task = data.get('btp_expert_task')
+
+    if not btp_expert_task:
+        return jsonify({"error": "No btp expert task provided"}), 400
+
+    # Assuming SAPBTPExpert function returns curated_final_content
+    result = mockSAPBTPExpert(btp_expert_task)
+
+    # # Return the first 'Steps' from the curated_final_content
+    # first_result_key = next(iter(result))
+    # first_result_steps = result[first_result_key].get('Steps', '')
+
+    return jsonify({
+        'btp_expert_result': result
     })
 
     
