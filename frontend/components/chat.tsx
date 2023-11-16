@@ -75,6 +75,10 @@ export function Chat() {
   const [SATask, setSATask] = useState('')
   const [isRefinementNeeded, setIsRefinementNeeded] = useState(false)
   const [refinementCount, setRefinementCount] = useState(0)
+  const [isSARefinementDone, setIsSARefinementDone] = useState(false)
+  const [isBTPExpertRefinementDone, setIsBTPExpertRefinementDone] =
+    useState(false)
+
   const containerRef = useRef<HTMLDivElement | null>(null)
 
   // useEffect hook to trigger the review when both outputs are ready
@@ -506,6 +510,14 @@ export function Chat() {
 
   // function to handle refinement by Solutions Architect
   const handleSolutionsArchitectRefinement = async (critique: any) => {
+    // Add a loading message for SAP Solutions Architect
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      {
+        sender: 'SAP Solutions Architect',
+        text: '⌛️🔃 Refining the solution ...'
+      }
+    ])
     try {
       const response = await fetch(
         'http://localhost:8080/api/refine_solutions_architect',
@@ -529,8 +541,11 @@ export function Chat() {
 
       const data = await response.json()
       // Update the UI with the refined solution
+      // Remove the loading message and add the actual response
       setMessages((prevMessages) => [
-        ...prevMessages,
+        ...prevMessages.filter(
+          (msg) => msg.text !== '⌛️🔃 Refining the solution ...'
+        ),
         {
           sender: 'SAP Solutions Architect',
           text: formatSolutionsArchitectResponse(
@@ -542,6 +557,7 @@ export function Chat() {
         'Refined solutions architect result: ' +
           data.refine_solutions_architect_result
       )
+      setIsSARefinementDone(true)
     } catch (error) {
       console.error('Error during Solutions Architect refinement:', error)
       setMessages((prevMessages) => [
@@ -555,6 +571,14 @@ export function Chat() {
   }
   // function to handle refinement by btp expert
   const handleBTPExpertRefinement = async (critique: any) => {
+    // Add a loading message for SAP Solutions Architect
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      {
+        sender: 'SAP BTP Expert',
+        text: '⌛️🔃 Refining the solution ...'
+      }
+    ])
     try {
       const response = await fetch(
         'http://localhost:8080/api/refine_btp_expert',
@@ -578,14 +602,18 @@ export function Chat() {
 
       const data = await response.json()
       // Update the UI with the refined solution
+      // Remove the loading message and add the actual response
       setMessages((prevMessages) => [
-        ...prevMessages,
+        ...prevMessages.filter(
+          (msg) => msg.text !== '⌛️🔃 Refining the solution ...'
+        ),
         {
           sender: 'SAP BTP Expert',
           text: formatSolutionsArchitectResponse(data.refined_btp_expert_result)
         }
       ])
       console.log('Refined BTP expert result: ' + data.refine_btp_expert_result)
+      setIsBTPExpertRefinementDone(true)
     } catch (error) {
       console.error('Error during BTP Expert refinement:', error)
       setMessages((prevMessages) => [
@@ -642,6 +670,15 @@ export function Chat() {
       ])
     }
   }
+
+  useEffect(() => {
+    if (isSARefinementDone && isBTPExpertRefinementDone) {
+      handleReviewBySeniorConsultant()
+      // Reset the refinement flags
+      setIsSARefinementDone(false)
+      setIsBTPExpertRefinementDone(false)
+    }
+  }, [isSARefinementDone, isBTPExpertRefinementDone])
 
   return (
     <div className='rounded-2xl border h-[75vh] flex flex-col justify-between'>
