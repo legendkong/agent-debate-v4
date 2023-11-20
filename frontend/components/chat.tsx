@@ -10,10 +10,11 @@ import { SeniorConsultantUI } from './seniorConsultantUi'
 type ChatMessage = {
   sender:
     | 'user'
-    | 'SAP Senior Consultant'
+    | 'SAP Lead Consultant'
     | 'SAP Solutions Architect'
     | 'SAP BTP Expert'
     | 'Moderator'
+    | 'Summary'
     | 'Error'
   text: string
 }
@@ -23,7 +24,7 @@ function determineTitleClass(sender: any) {
   switch (sender) {
     case 'user':
       return 'text-orange-400'
-    case 'SAP Senior Consultant':
+    case 'SAP Lead Consultant':
       return 'text-violet-400'
     case 'SAP Solutions Architect':
       return 'text-blue-300'
@@ -31,11 +32,34 @@ function determineTitleClass(sender: any) {
       return 'text-green-300'
     case 'Moderator':
       return 'text-amber-200 bg-blue-950'
+    case 'Summary':
+      return 'text-amber-400 bg-emerald-950'
     case 'Error':
       return 'text-red-300'
     default:
       return '' // Default case if needed
   }
+}
+
+// function formatSummaryResponse(btpExpertText: any, saText: any, scText: any) {
+//   return `
+//     <p style="color: #48BB78;">SAP BTP Expert:</p>
+//     <p>${newFormatSolArchitectResponse(btpExpertText)}</p>
+//     <br><br>
+//     <p style="color: #4299E1;">SAP Solutions Architect:</p>
+//     <p>${newFormatSolArchitectResponse(saText)}</p>
+//     <br><br>
+//     <p style="color: #A78BFA;">SAP Lead Consultant:</p>
+//     <p>${newFormatSolArchitectResponse(scText)}</p>
+//   `
+// }
+function formatSummaryResponse(scText: any) {
+  return `
+    <p style="color: #A78BFA;">SAP Lead Consultant:</p>
+    <br><br>
+    <p>${scText}</p>
+
+  `
 }
 
 // Function to format BTP Expert response
@@ -65,6 +89,70 @@ function formatSolutionsArchitectResponse(text: any) {
   return formattedText
 }
 
+function newFormatBTPExpertResponse(text: any) {
+  let formattedText = text
+
+  // Handle numbered lists
+  formattedText = formattedText.replace(/(\d+)\./g, '<br /><br />$1.')
+
+  // Format headers marked with ###Header### into bold
+  formattedText = formattedText.replace(/###(.*?)###/g, '<strong>$1</strong>')
+
+  // Format bullet points with indentation
+  formattedText = formattedText.replace(
+    / - /g,
+    '<br /><span style="padding-left: 20px;">&bull; </span>'
+  )
+
+  // Format 'Note:'
+  formattedText = formattedText.replace(
+    /Note:/g,
+    '<br /><br /><strong>Note:</strong>'
+  )
+
+  // Format 'Step X:' sections
+  formattedText = formattedText.replace(
+    /Step (\d+):/g,
+    '<br /><br /><strong>Step $1:</strong>'
+  )
+
+  // Format 'Challenge X:' and 'Solution:' sections
+  formattedText = formattedText.replace(
+    /Challenge (\d+):/g,
+    '<br /><strong>Challenge $1:</strong>'
+  )
+  formattedText = formattedText.replace(
+    /Solution:/g,
+    '<br /><strong>Solution:</strong>'
+  )
+
+  return formattedText
+}
+
+function newFormatSolArchitectResponse(text: any) {
+  let formattedText = text
+
+  // Handle numbered lists
+  formattedText = formattedText.replace(/(\d+)\./g, '<br /><br />$1.')
+
+  // Format headers marked with ###Header### into bold
+  formattedText = formattedText.replace(/###(.*?)###/g, '<strong>$1</strong>')
+
+  // Format bullet points with indentation
+  formattedText = formattedText.replace(
+    / - /g,
+    '<br /><span style="padding-left: 20px;">&bull; </span>'
+  )
+
+  // Format 'Note:'
+  formattedText = formattedText.replace(
+    /Note:/g,
+    '<br /><br /><strong>Note:</strong>'
+  )
+
+  return formattedText
+}
+
 export function Chat() {
   const [input, setInput] = useState('') // State to hold the input value
   const [isLoading, setIsLoading] = useState(false) // State to manage loading state
@@ -78,6 +166,10 @@ export function Chat() {
   const [isSARefinementDone, setIsSARefinementDone] = useState(false)
   const [isBTPExpertRefinementDone, setIsBTPExpertRefinementDone] =
     useState(false)
+  const [refinedSolutionsArchitectOutput, setRefinedSolutionsArchitectOutput] =
+    useState('')
+  const [refinedBTPExpertOutput, setRefinedBTPExpertOutput] = useState('')
+  const [moderatorFinished, setModeratorFinished] = useState(false)
 
   const containerRef = useRef<HTMLDivElement | null>(null)
 
@@ -97,11 +189,11 @@ export function Chat() {
     const userInputMessage: ChatMessage = { sender: 'user', text: input }
     setMessages((prevMessages) => [...prevMessages, userInputMessage])
 
-    // Add a loading message for Senior Consultant
+    // Add a loading message for Lead Consultant
     setMessages((prevMessages) => [
       ...prevMessages,
       {
-        sender: 'SAP Senior Consultant',
+        sender: 'SAP Lead Consultant',
         text: '🙋‍♂️🙋‍♀️ Assigning tasks ...'
       }
     ])
@@ -125,10 +217,10 @@ export function Chat() {
       }
 
       const seniorConsultantData = await seniorConsultantResponse.json()
-      console.log('Senior Consultant Data:' + seniorConsultantData)
+      console.log('Lead Consultant Data:' + seniorConsultantData)
 
       // const consultantResponseMessage: ChatMessage = {
-      //   sender: 'SAP Senior Consultant',
+      //   sender: 'SAP Lead Consultant',
       //   // Use HTML markup for line breaks
       //   text: `
       //     <p><strong>Scope:</strong> ${seniorConsultantData.scope}</p>
@@ -144,7 +236,7 @@ export function Chat() {
           (msg) => msg.text !== '🙋‍♂️🙋‍♀️ Assigning tasks ...'
         ),
         {
-          sender: 'SAP Senior Consultant',
+          sender: 'SAP Lead Consultant',
           text: `
             <p><strong>Scope:</strong> ${seniorConsultantData.scope}</p>
             <br></br>
@@ -226,8 +318,8 @@ export function Chat() {
           }
 
           const data = await response.json()
-          setBtpExpertOutput(data.btp_expert_result)
           console.log('BTP EXPERT DATA:' + data.btp_expert_result)
+          setBtpExpertOutput(data.btp_expert_result)
 
           // Remove the loading message and add the actual response
           setMessages((prevMessages) => [
@@ -236,7 +328,8 @@ export function Chat() {
             ),
             {
               sender: 'SAP BTP Expert',
-              text: formatSolutionsArchitectResponse(data.btp_expert_result)
+              text: newFormatBTPExpertResponse(data.btp_expert_result)
+              // text: formatSolutionsArchitectResponse(data.btp_expert_result)
             }
           ])
         } catch (error) {
@@ -328,7 +421,8 @@ export function Chat() {
             ),
             {
               sender: 'SAP Solutions Architect',
-              text: formatSolutionsArchitectResponse(
+              // text: formatSolutionsArchitectResponse(
+              text: newFormatSolArchitectResponse(
                 data.solutions_architect_result
               )
             }
@@ -393,11 +487,11 @@ export function Chat() {
       return // Consider adding some user feedback here
     }
 
-    // Add a loading message for Senior Consultant
+    // Add a loading message for Lead Consultant
     setMessages((prevMessages) => [
       ...prevMessages,
       {
-        sender: 'SAP Senior Consultant',
+        sender: 'SAP Lead Consultant',
         text: '🧠 Looking through the solutions and gathering feedback ...'
       }
     ])
@@ -423,7 +517,7 @@ export function Chat() {
       }
 
       const reviewData = await reviewResponse.json()
-      console.log('Reviewed data by senior consultant:' + reviewData)
+      console.log('Reviewed data by Lead Consultant:' + reviewData)
       console.log('Overall feedback:' + reviewData.overall_feedback)
       console.log(
         'Critique for BTP expert:' +
@@ -461,7 +555,7 @@ export function Chat() {
         handleModeration()
       }
 
-      // Update the chat with the senior consultant's review
+      // Update the chat with the Lead Consultant's review
       setMessages((prevMessages) => [
         ...prevMessages.filter(
           (msg) =>
@@ -469,7 +563,7 @@ export function Chat() {
             '🧠 Looking through the solutions and gathering feedback ...'
         ),
         {
-          sender: 'SAP Senior Consultant',
+          sender: 'SAP Lead Consultant',
           text: ` 
           <p>${reviewData.overall_feedback['Personal statement']}</p>
           <br></br>
@@ -496,13 +590,13 @@ export function Chat() {
         }
       }
     } catch (error) {
-      console.error('Error during senior consultant review: ', error)
+      console.error('Error during Lead Consultant review: ', error)
       // Update the chat with the error message
       setMessages((prevMessages) => [
         ...prevMessages,
         {
           sender: 'Error',
-          text: 'An error occurred during the senior consultant review.'
+          text: 'An error occurred during the Lead Consultant review.'
         }
       ])
     }
@@ -548,7 +642,10 @@ export function Chat() {
         ),
         {
           sender: 'SAP Solutions Architect',
-          text: formatSolutionsArchitectResponse(
+          // text: formatSolutionsArchitectResponse(
+          //   data.refined_solutions_architect_result
+          // )
+          text: newFormatSolArchitectResponse(
             data.refined_solutions_architect_result
           )
         }
@@ -558,6 +655,9 @@ export function Chat() {
           data.refine_solutions_architect_result
       )
       setIsSARefinementDone(true)
+      setRefinedSolutionsArchitectOutput(
+        data.refined_solutions_architect_result
+      )
     } catch (error) {
       console.error('Error during Solutions Architect refinement:', error)
       setMessages((prevMessages) => [
@@ -609,11 +709,13 @@ export function Chat() {
         ),
         {
           sender: 'SAP BTP Expert',
-          text: formatSolutionsArchitectResponse(data.refined_btp_expert_result)
+          // text: formatSolutionsArchitectResponse(data.refined_btp_expert_result)
+          text: newFormatSolArchitectResponse(data.refined_btp_expert_result)
         }
       ])
       console.log('Refined BTP expert result: ' + data.refine_btp_expert_result)
       setIsBTPExpertRefinementDone(true)
+      setRefinedBTPExpertOutput(data.refined_btp_expert_result)
     } catch (error) {
       console.error('Error during BTP Expert refinement:', error)
       setMessages((prevMessages) => [
@@ -655,6 +757,7 @@ export function Chat() {
           ...prevMessages,
           { sender: 'Moderator', text: data.message }
         ])
+        setModeratorFinished(true)
       }
 
       // Here you can handle whether or not to allow further user input
@@ -680,6 +783,105 @@ export function Chat() {
     }
   }, [isSARefinementDone, isBTPExpertRefinementDone])
 
+  // useEffect(() => {
+  //   if (moderatorFinished) {
+  //     // Determine which outputs to use in the summary
+  //     const finalSaOutput = refinedSolutionsArchitectOutput || saOutput
+  //     const finalBtpExpertOutput = refinedBTPExpertOutput || btpExpertOutput
+
+  //     const formattedSummary = formatSummaryResponse(
+  //       finalBtpExpertOutput,
+  //       finalSaOutput
+  //     )
+
+  //     const summaryMessage = {
+  //       sender: 'Summary',
+  //       text: formattedSummary
+  //     }
+
+  //     setMessages((prevMessages: any) => [...prevMessages, summaryMessage])
+  //     setModeratorFinished(false) // Reset the state
+  //     console.log('Summarized the conversation')
+  //   }
+  // }, [
+  //   moderatorFinished,
+  //   saOutput,
+  //   btpExpertOutput,
+  //   refinedSolutionsArchitectOutput,
+  //   refinedBTPExpertOutput
+  // ])
+  useEffect(() => {
+    const fetchSummary = async () => {
+      // Add a loading message for the Summary
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        {
+          sender: 'Summary',
+          text: '✍️ Summarizing the conversation ...'
+        }
+      ])
+      const finalSaOutput = refinedSolutionsArchitectOutput || saOutput
+      const finalBtpExpertOutput = refinedBTPExpertOutput || btpExpertOutput
+
+      try {
+        const response = await fetch('http://localhost:8080/api/summarize', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            solutions_architect_output: finalSaOutput,
+            btp_expert_output: finalBtpExpertOutput,
+            consulting_question: input
+          })
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`)
+        }
+
+        const data = await response.json()
+        const summaryFromConsultant = data.summary
+
+        // Remove the loading message and add the actual response
+        setMessages((prevMessages) => [
+          ...prevMessages.filter(
+            (msg) => msg.text !== '✍️ Summarizing the conversation ...'
+          ),
+          {
+            sender: 'Summary',
+            text: formatSummaryResponse(summaryFromConsultant)
+          }
+        ])
+        console.log('Summarized the conversation: ' + summaryFromConsultant)
+      } catch (error) {
+        console.error('Error fetching summary:', error)
+        // Update messages to show error and remove the loading message
+        setMessages((prevMessages) => [
+          ...prevMessages.filter(
+            (msg) => msg.text !== '⌛️🔃 Summarizing the conversation ...'
+          ),
+          {
+            sender: 'Error',
+            text: 'An error occurred during the summary generation.'
+          }
+        ])
+      }
+    }
+
+    if (moderatorFinished) {
+      fetchSummary()
+      setModeratorFinished(false) // Reset the state
+    }
+  }, [
+    moderatorFinished,
+    saOutput,
+    btpExpertOutput,
+    refinedSolutionsArchitectOutput,
+    refinedBTPExpertOutput,
+    input
+  ])
+
   return (
     <div className='rounded-2xl border h-[75vh] flex flex-col justify-between'>
       <div className='p-6 overflow-auto' ref={containerRef}>
@@ -690,7 +892,7 @@ export function Chat() {
             key={index}
             className={`mb-2 ${
               message.sender === 'Moderator' ? 'bg-blue-950' : ''
-            }`}
+            } ${message.sender === 'Summary' ? 'bg-emerald-950' : ''}`}
           >
             <CardHeader>
               <CardTitle className={determineTitleClass(message.sender)}>
@@ -698,6 +900,8 @@ export function Chat() {
                   ? 'You'
                   : message.sender === 'Moderator'
                   ? '👑 Moderator'
+                  : message.sender === 'Summary'
+                  ? '📜 Summary'
                   : message.sender}
               </CardTitle>
             </CardHeader>
