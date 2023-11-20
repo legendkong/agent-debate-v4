@@ -3,7 +3,7 @@ import requests
 from config.loadllm import token, svc_url
 
 def strict_output(system_prompt, user_prompt, output_format, token, svc_url, delimiter='###',
-                  model='gpt-35-turbo', temperature=0, num_tries=1, verbose=False):
+                  model='gpt-4-32k', temperature=0, num_tries=1, verbose=False):
     
 #   Ensures that the llm output will always adhere to the desired output json format. 
 #   Uses rule-based iterative feedback to ask GPT to self-correct.
