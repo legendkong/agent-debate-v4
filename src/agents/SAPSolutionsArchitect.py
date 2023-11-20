@@ -18,9 +18,9 @@ def SAPSolutionsArchitect(solutions_architect_task):
                             with a deep expertise in the field of crafting solutions in SAP environments.
                             You play a critical role in ensuring tha the SAP applications are designed and
                             configured in a manner that meets a client's needs while being robust, scalable,
-                            and easily maintainable. You report to the SAP Senior Consultant, who has 
+                            and easily maintainable. You report to the SAP Lead Consultant, who has 
                             assigned you the following task: {solutions_architect_task}.
-                            You are to provide solution(s) to the task assigned to you by the SAP Senior Consultant.''',
+                            You are to provide solution(s) to the task assigned to you by the SAP Lead Consultant.''',
                             user_prompt = f'''Task assigned to you: {solutions_architect_task}''', 
                             output_format = {"Solution": "Full description of the steps for the customer to execute"},
                             token=token,

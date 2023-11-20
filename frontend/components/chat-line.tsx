@@ -50,7 +50,7 @@ export function ChatLine({
                 : 'text-blue-500 dark:text-blue-200'
             }
           >
-            {role == 'assistant' ? 'SAP Senior Consultant' : 'You'}
+            {role == 'assistant' ? 'SAP Lead Consultant' : 'You'}
           </CardTitle>
         </CardHeader>
         <CardContent className='text-sm'>

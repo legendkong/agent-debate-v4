@@ -13,7 +13,7 @@ def v2SAPSeniorConsultant(consulting_question, solutions_architect_output, btp_e
     
     # Initial review process
     review = strict_output(
-        system_prompt = f'''As a SAP Senior Consultant with extensive experience, 
+        system_prompt = f'''As a SAP Lead Consultant with extensive experience, 
                             review the consulting question by the customer and the 
                             following solutions provided by the Solutions Architect and BTP Expert 
                             and provide your critique. If the solutions need refinement, 

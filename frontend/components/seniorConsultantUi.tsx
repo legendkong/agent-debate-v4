@@ -35,7 +35,7 @@ export function SeniorConsultantUI() {
       <Card className='mb-2'>
         <CardHeader>
           <CardTitle className={'text-violet-400 dark:text-violet-400'}>
-            SAP Senior Consultant
+            SAP Lead Consultant
           </CardTitle>
         </CardHeader>
         <CardContent className='text-sm'>

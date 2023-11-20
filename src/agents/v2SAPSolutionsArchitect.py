@@ -7,7 +7,7 @@ def v2SAPSolutionsArchitect(previous_solution, critique, solutions_architect_tas
     # Revise the solution based on critique and provide an improved solution.
     
     # :param previous_solution: The previous solution provided by the Solutions Architect.
-    # :param critique: The critique and requests for refinement from the Senior Consultant.
+    # :param critique: The critique and requests for refinement from the Lead Consultant.
     # :param solutions_architect_task: The task for which the solution is being refined.
     # :return: The refined solution.
     # """
@@ -15,13 +15,13 @@ def v2SAPSolutionsArchitect(previous_solution, critique, solutions_architect_tas
     # Assuming strict_output is a utility function you've defined that uses an AI or some complex logic to generate output.
     refined_solution = strict_output(
         system_prompt=f'''You are the SAP Solutions Architect revising your previous solution based on the 
-                        feedback from the SAP Senior Consultant. Your previous solution was:
+                        feedback from the SAP Lead Consultant. Your previous solution was:
                         {previous_solution}
                         
-                        The critique and refinement requests from the Senior Consultant were as follows:
+                        The critique and refinement requests from the Lead Consultant were as follows:
                         {critique}
                         
-                        The task assigned to you by the SAP Senior Consultant is:
+                        The task assigned to you by the SAP Lead Consultant is:
                         {solutions_architect_task}
                         
                         Taking this into account, please provide a refined solution that addresses the critique.''',

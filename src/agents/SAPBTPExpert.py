@@ -26,9 +26,9 @@ def SAPBTPExpert(btp_expert_task):
     res = strict_output(system_prompt = f'''You are a helpful assistant meant to help
                         the SAP BTP expert to design google 
                         web queries to find solutions and information to address the tasks which 
-                        the Senior Consultant assigned you to do.
+                        the Lead Consultant assigned you to do.
                         Give {num_google_queries} suitable queries to get information corresponding 
-                        to what the senior consultant assigned you to do.''',
+                        to what the Lead Consultant assigned you to do.''',
                         user_prompt = f'''Base Query: {btp_expert_task}''', 
                         output_format = {"query"+str(i):"query text" for i in range(num_google_queries)}, token=token,
                         svc_url=svc_url,)
@@ -221,9 +221,9 @@ def SAPBTPExpert(btp_expert_task):
                 existing_entry = content[root_url]
 
             res = strict_output(system_prompt = f'''You are a SAP BTP expert meant to find information 
-                                and solutions based on the task assigned by the senior consultant.
+                                and solutions based on the task assigned by the Lead Consultant.
                                 Extract information from text that is related to {search_terms}, then list 
-                                the steps required to be taken in order to achieve what the senior consultant
+                                the steps required to be taken in order to achieve what the Lead Consultant
                                 has assigned you to do, which is: {btp_expert_task}.
                                 If there is existing data, add on to it.
                                 Limit the "Steps" field to 1000 words.

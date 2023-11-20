@@ -6,7 +6,7 @@ from src.config.loadllm import token, svc_url
 import time
 
 ###############################
-# SAP Senior Consultant Agent 
+# SAP Lead Consultant Agent 
 # Role: 
 # 1. Receives a customer request as input.
 # 2. Breaks the question down and scopes it.
@@ -23,14 +23,14 @@ load_dotenv()
 
 # def gather_user_input():
 #     #  Gather input from the user (representing the customer agent).
-#     user_query = input("SAP Senior Consultant(15 years of experience): Hey there! Please ask your consulting question and let our team handle the rest:\n")
+#     user_query = input("SAP Lead Consultant(15 years of experience): Hey there! Please ask your consulting question and let our team handle the rest:\n")
 #     return user_query
 
 
 def SAPSeniorConsultant(consulting_question):
     # consulting_question = gather_user_input()
     
-    res = strict_output(system_prompt = f'''You are a SAP Senior Consultant with 15 years of experience. 
+    res = strict_output(system_prompt = f'''You are a SAP Lead Consultant with 15 years of experience. 
                         You work in a team of three; yourself as a planner/manager,and under you is
                         a SAP BTP expert and a SAP Solutions Architect.
                         You help to understand the needs and scope the customer's request 
@@ -50,7 +50,7 @@ def SAPSeniorConsultant(consulting_question):
     solutions_architect_task = res['SAP Solutions Architect Task']  
      
     print()  
-    print("SAP Senior Consultant: " + scope)
+    print("SAP Lead Consultant: " + scope)
     print("\n1. Task for the BTP Expert: " +  btp_expert_task)
     print()
     print("2. Task for the Solutions Architect: " + solutions_architect_task)
