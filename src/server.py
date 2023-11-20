@@ -10,6 +10,7 @@ from agents.v2SAPSolutionsArchitect import v2SAPSolutionsArchitect
 from agents.v2SAPBTPExpert import v2SAPBTPExpert
 from agents.Moderator import Moderator
 from agents.mockSAPBTPExpert import mockSAPBTPExpert
+from agents.summarizeSeniorConsultant import summarizeSeniorConsultant
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
@@ -19,7 +20,7 @@ CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
 def home():
     return "Welcome to the AGENT-DEBATE-V4 API!"
 
-# After the user gives his consulting question, senior consultant will scope the question and assign tasks to the BTP expert and solutions architect.
+# After the user gives his consulting question, Lead Consultant will scope the question and assign tasks to the BTP expert and solutions architect.
 @app.route('/api/senior_consultant_post', methods=['POST'])
 def senior_consultant_post():
     data = request.get_json()
@@ -95,7 +96,7 @@ def mock_btp_expert():
     })
 
     
-# (Give critique) v2 Senior Consultant response to solutions from BTP expert and solutions architect
+# (Give critique) v2 Lead Consultant response to solutions from BTP expert and solutions architect
 @app.route('/api/v2_senior_consultant', methods=['POST'])
 def api_v2_senior_consultant():
     data = request.get_json()
@@ -157,6 +158,25 @@ def moderate_conversation():
         'message': message,
         'allow_input': allow_input
     })
+    
+# Summary provided by senior consultant
+@app.route('/api/summarize', methods=['POST'])
+def summarize():
+    # Extract data from the request
+    data = request.get_json()
+    solutions_architect_output = data.get('solutions_architect_output')
+    btp_expert_output = data.get('btp_expert_output')
+    consulting_question = data.get('consulting_question')
+
+    # Check if the necessary data is provided
+    if not solutions_architect_output or not btp_expert_output:
+        return jsonify({"error": "Missing required data"}), 400
+
+    # Call the summarizeSeniorConsultant function
+    summary = summarizeSeniorConsultant(solutions_architect_output, btp_expert_output, consulting_question)
+
+    # Return the summary
+    return jsonify({"summary": summary})
 
 
 
