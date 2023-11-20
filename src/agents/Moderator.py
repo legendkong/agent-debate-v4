@@ -16,7 +16,7 @@ def Moderator(refinement_needed, refinement_count):
         return ("All team members of the SAP consultancy team have spoken and given their pointers. You may proceed to try the above solutions proposed by the members of the SAP consultancy team. If there are any other queries, please ask away.", False)
 
     # If more than two rounds of refinement have occurred, suggest rephrasing or breaking down the problem
-    elif refinement_count > 2:
+    elif refinement_count > 3:
         return ("The consultancy team has done more than two rounds of refinement. If the solution does not answer your problem statement, perhaps you could rephrase your problem statement or break it down to simpler points.", False)
 
     # Otherwise, allow the conversation to continue
