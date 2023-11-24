@@ -6,6 +6,7 @@ import { Button } from './ui/button'
 import { Spinner } from './ui/spinner'
 import { useRef, useState, useEffect } from 'react'
 import { SeniorConsultantUI } from './seniorConsultantUi'
+import PdfDownloadButton from './PdfDownload'
 
 type ChatMessage = {
   sender:
@@ -41,22 +42,10 @@ function determineTitleClass(sender: any) {
   }
 }
 
-// function formatSummaryResponse(btpExpertText: any, saText: any, scText: any) {
-//   return `
-//     <p style="color: #48BB78;">SAP BTP Expert:</p>
-//     <p>${newFormatSolArchitectResponse(btpExpertText)}</p>
-//     <br><br>
-//     <p style="color: #4299E1;">SAP Solutions Architect:</p>
-//     <p>${newFormatSolArchitectResponse(saText)}</p>
-//     <br><br>
-//     <p style="color: #A78BFA;">SAP Lead Consultant:</p>
-//     <p>${newFormatSolArchitectResponse(scText)}</p>
-//   `
-// }
 function formatSummaryResponse(scText: any) {
   return `
     <p style="color: #A78BFA;">SAP Lead Consultant:</p>
-    <br><br>
+    <br>
     <p>${scText}</p>
 
   `
@@ -170,6 +159,7 @@ export function Chat() {
     useState('')
   const [refinedBTPExpertOutput, setRefinedBTPExpertOutput] = useState('')
   const [moderatorFinished, setModeratorFinished] = useState(false)
+  const [isConversationEnded, setIsConversationEnded] = useState(false)
 
   const containerRef = useRef<HTMLDivElement | null>(null)
 
@@ -219,18 +209,6 @@ export function Chat() {
       const seniorConsultantData = await seniorConsultantResponse.json()
       console.log('Lead Consultant Data:' + seniorConsultantData)
 
-      // const consultantResponseMessage: ChatMessage = {
-      //   sender: 'SAP Lead Consultant',
-      //   // Use HTML markup for line breaks
-      //   text: `
-      //     <p><strong>Scope:</strong> ${seniorConsultantData.scope}</p>
-      //     <br></br>
-      //     <p><strong>BTP Expert Task:</strong> ${seniorConsultantData.btp_expert_task}</p>
-      //     <br></br>
-      //     <p><strong>Solutions Architect Task:</strong> ${seniorConsultantData.solutions_architect_task}</p>
-      //   `
-      // }
-
       setMessages((prevMessages) => [
         ...prevMessages.filter(
           (msg) => msg.text !== '🙋‍♂️🙋‍♀️ Assigning tasks ...'
@@ -250,45 +228,11 @@ export function Chat() {
       setBTPExpertTask(seniorConsultantData.btp_expert_task)
       setSATask(seniorConsultantData.solutions_architect_task)
 
-      // setMessages((prevMessages) => [
-      //   // ...prevMessages,
-      //   // consultantResponseMessage
-
-      // ])
       setMessages((prevMessages) => [
         ...prevMessages.filter((msg) => msg.text !== '🙋‍♂️🙋‍♀️ Assigning tasks ...')
       ])
-      // ********** Function to handle BTP expert task independently **********
-      // const handleBTPExpertTask = async (task: any) => {
-      //   const response = await fetch(
-      //     'http://localhost:8080/api/mock_btp_expert',
-      //     {
-      //       method: 'POST',
-      //       headers: {
-      //         'Content-Type': 'application/json'
-      //       },
-      //       body: JSON.stringify({ btp_expert_task: task })
-      //     }
-      //   )
 
-      //   if (!response.ok) {
-      //     throw new Error(
-      //       `HTTP error from BTP Expert! Status: ${response.status}`
-      //     )
-      //   }
-
-      //   const data = await response.json()
-      //   console.log('BTP EXPERT DATA:' + data.btp_expert_result)
-      //   setBtpExpertOutput(data.btp_expert_result)
-      //   setMessages((prevMessages) => [
-      //     ...prevMessages,
-      //     {
-      //       sender: 'SAP BTP Expert',
-      //       // text: formatBTPExpertResponse(data.btp_expert_result)
-      //       text: formatSolutionsArchitectResponse(data.btp_expert_result)
-      //     }
-      //   ])
-      // }
+      // ********** Function to handle BTP Expert task independently **********
       const handleBTPExpertTask = async (task: any) => {
         // Add a loading message for BTP Expert
         setMessages((prevMessages) => [
@@ -329,7 +273,6 @@ export function Chat() {
             {
               sender: 'SAP BTP Expert',
               text: newFormatBTPExpertResponse(data.btp_expert_result)
-              // text: formatSolutionsArchitectResponse(data.btp_expert_result)
             }
           ])
         } catch (error) {
@@ -346,39 +289,6 @@ export function Chat() {
       // ********** END OF BTP EXPERT API CALL **********
 
       // ********** Function to handle Solutions Architect task independently **********
-      // const handleSolutionsArchitectTask = async (task: any) => {
-      //   const response = await fetch(
-      //     'http://localhost:8080/api/solutions_architect',
-      //     {
-      //       method: 'POST',
-      //       headers: {
-      //         'Content-Type': 'application/json'
-      //       },
-      //       body: JSON.stringify({ solutions_architect_task: task })
-      //     }
-      //   )
-
-      //   if (!response.ok) {
-      //     throw new Error(
-      //       `HTTP error from Solutions Architect! Status: ${response.status}`
-      //     )
-      //   }
-
-      //   const data = await response.json()
-      //   console.log(
-      //     'SOLUTIONS ARCHITECT DATA:' + data.solutions_architect_result
-      //   )
-      //   setSaOutput(data.solutions_architect_result)
-      //   setMessages((prevMessages) => [
-      //     ...prevMessages,
-      //     {
-      //       sender: 'SAP Solutions Architect',
-      //       text: formatSolutionsArchitectResponse(
-      //         data.solutions_architect_result
-      //       )
-      //     }
-      //   ])
-      // }
       const handleSolutionsArchitectTask = async (task: any) => {
         // Add a loading message for Solutions Architect
         setMessages((prevMessages) => [
@@ -783,33 +693,6 @@ export function Chat() {
     }
   }, [isSARefinementDone, isBTPExpertRefinementDone])
 
-  // useEffect(() => {
-  //   if (moderatorFinished) {
-  //     // Determine which outputs to use in the summary
-  //     const finalSaOutput = refinedSolutionsArchitectOutput || saOutput
-  //     const finalBtpExpertOutput = refinedBTPExpertOutput || btpExpertOutput
-
-  //     const formattedSummary = formatSummaryResponse(
-  //       finalBtpExpertOutput,
-  //       finalSaOutput
-  //     )
-
-  //     const summaryMessage = {
-  //       sender: 'Summary',
-  //       text: formattedSummary
-  //     }
-
-  //     setMessages((prevMessages: any) => [...prevMessages, summaryMessage])
-  //     setModeratorFinished(false) // Reset the state
-  //     console.log('Summarized the conversation')
-  //   }
-  // }, [
-  //   moderatorFinished,
-  //   saOutput,
-  //   btpExpertOutput,
-  //   refinedSolutionsArchitectOutput,
-  //   refinedBTPExpertOutput
-  // ])
   useEffect(() => {
     const fetchSummary = async () => {
       // Add a loading message for the Summary
@@ -872,6 +755,7 @@ export function Chat() {
     if (moderatorFinished) {
       fetchSummary()
       setModeratorFinished(false) // Reset the state
+      setIsConversationEnded(true)
     }
   }, [
     moderatorFinished,
@@ -914,19 +798,24 @@ export function Chat() {
           </Card>
         ))}
       </div>
+      <div className=' p-4 flex items-center justify-between'>
+        <form onSubmit={handleSubmit} className='flex-grow flex mr-2'>
+          <Input
+            value={input}
+            placeholder={'Type to chat with our professionals from SAP...'}
+            onChange={handleInputChange}
+            className='flex-grow mr-2'
+          />
 
-      <form onSubmit={handleSubmit} className='p-4 flex clear-both'>
-        <Input
-          value={input}
-          placeholder={'Type to chat with our professionals from SAP...'}
-          onChange={handleInputChange}
-          className='mr-2'
+          <Button type='submit' className='flex-shrink-0'>
+            {isLoading ? <Spinner /> : 'Ask'}
+          </Button>
+        </form>
+        <PdfDownloadButton
+          messages={messages}
+          isConversationEnded={isConversationEnded}
         />
-
-        <Button type='submit' className='w-24'>
-          {isLoading ? <Spinner /> : 'Ask'}
-        </Button>
-      </form>
+      </div>
     </div>
   )
 }
