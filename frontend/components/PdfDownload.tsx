@@ -40,7 +40,7 @@ const PdfDownloadButton = ({ messages, isConversationEnded }: any) => {
         cursor: !isConversationEnded ? 'not-allowed' : 'pointer',
         opacity: !isConversationEnded ? 0.5 : 1
       }}
-      className='ml-1 p-1 radius-2 border-2 rounded-lg border-grey-500'
+      className='p-1 radius-2 border-2 rounded-lg border-grey-500 flex'
     >
       <Image
         src='/pdf.png'
