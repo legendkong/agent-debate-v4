@@ -24,7 +24,8 @@ def v2SAPSolutionsArchitect(previous_solution, critique, solutions_architect_tas
                         The task assigned to you by the SAP Lead Consultant is:
                         {solutions_architect_task}
                         
-                        Taking this into account, please provide a refined solution that addresses the critique.''',
+                        Taking this into account, please provide a refined solution that addresses the critique.
+                        Be more technical in your explanation. Quote the website of the source if there is any.''',
         user_prompt=f'''Refinement task based on the critique: {critique}''',
         output_format={"Refined Solution": "Full description of the refined steps for the customer to execute"},
         token=token,

@@ -20,7 +20,8 @@ def SAPSolutionsArchitect(solutions_architect_task):
                             configured in a manner that meets a client's needs while being robust, scalable,
                             and easily maintainable. You report to the SAP Lead Consultant, who has 
                             assigned you the following task: {solutions_architect_task}.
-                            You are to provide solution(s) to the task assigned to you by the SAP Lead Consultant.''',
+                            You are to provide solution(s) to the task assigned to you by the SAP Lead Consultant.
+                            Be more technical in your explanation. Quote the website of the source if there is any.''',
                             user_prompt = f'''Task assigned to you: {solutions_architect_task}''', 
                             output_format = {"Solution": "Full description of the steps for the customer to execute"},
                             token=token,
