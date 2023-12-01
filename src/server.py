@@ -11,6 +11,7 @@ from agents.v2SAPBTPExpert import v2SAPBTPExpert
 from agents.Moderator import Moderator
 from agents.mockSAPBTPExpert import mockSAPBTPExpert
 from agents.summarizeSeniorConsultant import summarizeSeniorConsultant
+from agents.mermaidConverter import mermaidConverter
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
@@ -152,6 +153,10 @@ def moderate_conversation():
     data = request.get_json()
     refinement_needed = data.get('refinement_needed', False)
     refinement_count = data.get('refinement_count', 0)
+    
+    print("Refinement needed:", refinement_needed)  # Debug print
+    print("Refinement count:", refinement_count)  # Debug print
+
 
     message, allow_input = Moderator(refinement_needed, refinement_count)
     return jsonify({
@@ -177,6 +182,25 @@ def summarize():
 
     # Return the summary
     return jsonify({"summary": summary})
+
+# Mermaid converter
+@app.route('/api/convert_to_mermaid', methods=['POST'])
+def convert_to_mermaid():
+    # Extract the text from the request
+    data = request.json
+    text_description = data.get('text')
+
+    if not text_description:
+        return jsonify({'error': 'No text provided'}), 400
+
+    # Call the mermaidConverter function
+    try:
+        mermaidSyntax = mermaidConverter(text_description)
+        return jsonify({'mermaidSyntax': mermaidSyntax})
+    except Exception as e:
+        print(e)
+        return jsonify({'error': str(e)}), 500
+
 
 
 
