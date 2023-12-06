@@ -1,5 +1,4 @@
 'use client'
-
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Input } from './ui/input'
 import { Button } from './ui/button'
@@ -8,6 +7,12 @@ import { useRef, useState, useEffect } from 'react'
 import { SeniorConsultantUI } from './seniorConsultantUi'
 import PdfDownloadButton from './PdfDownload'
 import mermaid from 'mermaid'
+import {
+  newFormatBTPExpertResponse,
+  formatSummaryResponse,
+  newFormatSolArchitectResponse
+} from 'lib/formatResponse'
+import { determineTitleClass } from 'lib/determineTitleClass'
 
 type ChatMessage = {
   sender:
@@ -21,132 +26,10 @@ type ChatMessage = {
   text: string
 }
 
-// Helper function to determine the class based on the sender
-function determineTitleClass(sender: any) {
-  switch (sender) {
-    case 'user':
-      return 'text-orange-400'
-    case 'SAP Lead Consultant':
-      return 'text-violet-400'
-    case 'SAP Solutions Architect':
-      return 'text-blue-300'
-    case 'SAP BTP Expert':
-      return 'text-green-300'
-    case 'Moderator':
-      return 'text-amber-200 bg-blue-950'
-    case 'Summary':
-      return 'text-amber-400 bg-emerald-950'
-    case 'Error':
-      return 'text-red-300'
-    default:
-      return '' // Default case if needed
-  }
-}
-
-function formatSummaryResponse(scText: any) {
-  return `
-    <p style="color: #A78BFA;">SAP Lead Consultant:</p>
-    <br>
-    <p>${scText}</p>
-
-  `
-}
-
-// Function to format BTP Expert response
-function formatBTPExpertResponse(text: any) {
-  // Replacing newline characters (\n) with HTML line breaks (<br />)
-  const formattedText = text.replace(/\\n/g, '<br />')
-  console.log('Formatted Text:', formattedText)
-  return formattedText
-}
-
-// Function to format Solutions Architect response
-function formatSolutionsArchitectResponse(text: any) {
-  // This regex looks for patterns like "1.", "2.", etc., and inserts a line break before them
-  let formattedText = text.replace(/(\d+)\./g, '<br /><br />$1.')
-
-  // Additional formatting for bullet points with inline styling for indentation
-  formattedText = formattedText.replace(
-    / - /g,
-    '<br /><span style="padding-left: 20px;">&bull; </span>' // Inline style for indentation
-  )
-
-  // Formatting for 'Note:'
-  formattedText = formattedText.replace(
-    /Note:/g,
-    '<br /><br /><strong>Note:</strong>'
-  )
-  return formattedText
-}
-
-function newFormatBTPExpertResponse(text: any) {
-  let formattedText = text
-
-  // Handle numbered lists
-  formattedText = formattedText.replace(/(\d+)\./g, '<br /><br />$1.')
-
-  // Format headers marked with ###Header### into bold
-  formattedText = formattedText.replace(/###(.*?)###/g, '<strong>$1</strong>')
-
-  // Format bullet points with indentation
-  formattedText = formattedText.replace(
-    / - /g,
-    '<br /><span style="padding-left: 20px;">&bull; </span>'
-  )
-
-  // Format 'Note:'
-  formattedText = formattedText.replace(
-    /Note:/g,
-    '<br /><br /><strong>Note:</strong>'
-  )
-
-  // Format 'Step X:' sections
-  formattedText = formattedText.replace(
-    /Step (\d+):/g,
-    '<br /><br /><strong>Step $1:</strong>'
-  )
-
-  // Format 'Challenge X:' and 'Solution:' sections
-  formattedText = formattedText.replace(
-    /Challenge (\d+):/g,
-    '<br /><strong>Challenge $1:</strong>'
-  )
-  formattedText = formattedText.replace(
-    /Solution:/g,
-    '<br /><strong>Solution:</strong>'
-  )
-
-  return formattedText
-}
-
-function newFormatSolArchitectResponse(text: any) {
-  let formattedText = text
-
-  // Handle numbered lists
-  formattedText = formattedText.replace(/(\d+)\./g, '<br /><br />$1.')
-
-  // Format headers marked with ###Header### into bold
-  formattedText = formattedText.replace(/###(.*?)###/g, '<strong>$1</strong>')
-
-  // Format bullet points with indentation
-  formattedText = formattedText.replace(
-    / - /g,
-    '<br /><span style="padding-left: 20px;">&bull; </span>'
-  )
-
-  // Format 'Note:'
-  formattedText = formattedText.replace(
-    /Note:/g,
-    '<br /><br /><strong>Note:</strong>'
-  )
-
-  return formattedText
-}
-
 export function Chat() {
   const [input, setInput] = useState('') // State to hold the input value
   const [isLoading, setIsLoading] = useState(false) // State to manage loading state
-  const [messages, setMessages] = useState<ChatMessage[]>([]) // Use our ChatMessage type here
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [btpExpertOutput, setBtpExpertOutput] = useState('')
   const [saOutput, setSaOutput] = useState('')
   const [BTPExpertTask, setBTPExpertTask] = useState('')
@@ -162,7 +45,6 @@ export function Chat() {
   const [moderatorFinished, setModeratorFinished] = useState(false)
   const [isConversationEnded, setIsConversationEnded] = useState(false)
   const [mermaidSvg, setMermaidSvg] = useState('')
-
   const containerRef = useRef<HTMLDivElement | null>(null)
 
   // useEffect hook to trigger the review when both outputs are ready
@@ -209,7 +91,6 @@ export function Chat() {
       }
 
       const seniorConsultantData = await seniorConsultantResponse.json()
-      console.log('Lead Consultant Data:' + seniorConsultantData)
 
       setMessages((prevMessages) => [
         ...prevMessages.filter(
@@ -220,9 +101,9 @@ export function Chat() {
           text: `
             <p><strong>Scope:</strong> ${seniorConsultantData.scope}</p>
             <br></br>
-            <p><strong>BTP Expert Task:</strong> ${seniorConsultantData.btp_expert_task}</p>
+            <p><strong>BTP Expert Task:</strong> ${seniorConsultantData.btp_scope}</p>
             <br></br>
-            <p><strong>Solutions Architect Task:</strong> ${seniorConsultantData.solutions_architect_task}</p>
+            <p><strong>Solutions Architect Task:</strong> ${seniorConsultantData.sa_scope}</p>
           `
         }
       ])
@@ -275,6 +156,7 @@ export function Chat() {
             {
               sender: 'SAP BTP Expert',
               text: newFormatBTPExpertResponse(data.btp_expert_result)
+              // text: data.btp_expert_result
             }
           ])
         } catch (error) {
@@ -334,9 +216,7 @@ export function Chat() {
             {
               sender: 'SAP Solutions Architect',
               // text: formatSolutionsArchitectResponse(
-              text: newFormatSolArchitectResponse(
-                data.solutions_architect_result
-              )
+              text: newFormatBTPExpertResponse(data.solutions_architect_result)
             }
           ])
         } catch (error) {
@@ -884,8 +764,3 @@ export function Chat() {
     </div>
   )
 }
-
-{
-  /* Position of Mermaid Diagram */
-}
-// <div ref={mermaidRef} id='generatedGraph' className='my-4'></div>
