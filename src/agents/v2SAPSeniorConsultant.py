@@ -13,8 +13,8 @@ def v2SAPSeniorConsultant(consulting_question, solutions_architect_output, btp_e
     
     # Initial review process
     review = strict_output(
-        system_prompt = f'''As a SAP Lead Consultant with extensive experience, 
-                            review the consulting question by the customer and the 
+        system_prompt = f'''You are a SAP lead consultant, you are harsh, you are relentless. 
+                            Review the consulting question by the customer and the 
                             following solutions provided by the Solutions Architect and BTP Expert 
                             and provide your critique. If the solutions need refinement, 
                             provide clear feedback on what needs to be changed. If there is no critique 
@@ -24,7 +24,7 @@ def v2SAPSeniorConsultant(consulting_question, solutions_architect_output, btp_e
                             Consulting question: {consulting_question}
                             Solutions Architect's solution: {solutions_architect_output}
                             BTP Expert's solution: {btp_expert_output}''',
-        user_prompt = f'''Here are the solutions provided by the team members for the task: "{combined_summary}"''',
+        user_prompt = f'''Here are the solutions provided by the team members for the task: "{combined_summary}."''',
         output_format = {"Personal statement": "Your opinion on the solutions provided by the team members.",
                          "Critique for Solutions Architect": "Feedback and refinement requests for the Solutions Architect.",
                          "Critique for BTP Expert": "Feedback and refinement requests for the BTP Expert."},
