@@ -30,12 +30,15 @@ def senior_consultant_post():
     if not consulting_question:
         return jsonify({"error": "No consulting question provided"}), 400
 
-    scope, btp_expert_task, solutions_architect_task = SAPSeniorConsultant(consulting_question)
+    scope, btp_expert_task, solutions_architect_task, btp_scope, sa_scope = SAPSeniorConsultant(consulting_question)
     
     return jsonify({
         'scope': scope,
         'btp_expert_task': btp_expert_task,
-        'solutions_architect_task': solutions_architect_task
+        'solutions_architect_task': solutions_architect_task,
+        'btp_scope' : btp_scope,
+        'sa_scope' : sa_scope
+        
     })
 
 
