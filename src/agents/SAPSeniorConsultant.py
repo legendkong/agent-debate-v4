@@ -28,7 +28,6 @@ load_dotenv()
 
 
 def SAPSeniorConsultant(consulting_question):
-    # consulting_question = gather_user_input()
     
     res = strict_output(system_prompt = f'''You are a SAP Lead Consultant with 15 years of experience. 
                         You work in a team of three; yourself as a planner/manager,and under you is
@@ -46,16 +45,12 @@ def SAPSeniorConsultant(consulting_question):
                         svc_url=svc_url,
                         )
     scope = res['Scope']
-    btp_expert_task = res['SAP BTP Expert Task']
-    solutions_architect_task = res['SAP Solutions Architect Task']  
-     
-    print()  
-    print("SAP Lead Consultant: " + scope)
-    print("\n1. Task for the BTP Expert: " +  btp_expert_task)
-    print()
-    print("2. Task for the Solutions Architect: " + solutions_architect_task)
+    btp_scope = res['SAP BTP Expert Task']
+    sa_scope = res['SAP Solutions Architect Task']    
+    btp_expert_task = res['Scope'] + " " + res['SAP BTP Expert Task']
+    solutions_architect_task = res['Scope'] + " " + res['SAP Solutions Architect Task']
     
-    return scope, btp_expert_task, solutions_architect_task
+    return scope, btp_expert_task, solutions_architect_task, btp_scope, sa_scope
     
 if __name__ == "__main__":
     SAPSeniorConsultant()
