@@ -90,7 +90,7 @@ function determineProfileImage(sender: any) {
     case 'Moderator':
       return (
         <Image
-          src='/Moderator.png'
+          src='/SAPModerator.png'
           alt='SAP Moderator Profile'
           width={40}
           height={40}
