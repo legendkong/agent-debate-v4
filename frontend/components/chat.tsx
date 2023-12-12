@@ -6,13 +6,15 @@ import { Spinner } from './ui/spinner'
 import { useRef, useState, useEffect } from 'react'
 import { SeniorConsultantUI } from './seniorConsultantUi'
 import PdfDownloadButton from './PdfDownload'
+import Image from 'next/image'
 import mermaid from 'mermaid'
 import {
   newFormatBTPExpertResponse,
   formatSummaryResponse,
   newFormatSolArchitectResponse
 } from 'lib/formatResponse'
-import { determineTitleClass } from 'lib/determineTitleClass'
+// import { determineTitleClass } from 'lib/determineTitleClass'
+// import { determineProfileImage } from 'lib/determineProfileImage'
 
 type ChatMessage = {
   sender:
@@ -24,6 +26,77 @@ type ChatMessage = {
     | 'Summary'
     | 'Error'
   text: string
+}
+
+function determineTitleClass(sender: any) {
+  switch (sender) {
+    case 'user':
+      return 'text-orange-400'
+    case 'SAP Lead Consultant':
+      return 'text-violet-400'
+    case 'SAP Solutions Architect':
+      return 'text-blue-300'
+    case 'SAP BTP Expert':
+      return 'text-green-300'
+    case 'Moderator':
+      return 'text-amber-200 bg-blue-950'
+    case 'Summary':
+      return 'text-amber-400 bg-emerald-950'
+    case 'Error':
+      return 'text-red-300'
+    default:
+      return ''
+  }
+}
+
+function determineProfileImage(sender: any) {
+  switch (sender) {
+    case 'user':
+      return (
+        <Image
+          src='/SAPCustomer.png'
+          alt='SAP Customer Profile'
+          width={40}
+          height={40}
+        />
+      )
+    case 'SAP Lead Consultant':
+      return (
+        <Image
+          src='/SAPLeadConsultant.png'
+          alt='SAP Lead Consultant Profile'
+          width={40}
+          height={40}
+        />
+      )
+    case 'SAP Solutions Architect':
+      return (
+        <Image
+          src='/SAPSolutionsArchitect.png'
+          alt='SAP Solutions Architect Profile'
+          width={40}
+          height={40}
+        />
+      )
+    case 'SAP BTP Expert':
+      return (
+        <Image
+          src='/SAPBTPExpert.png'
+          alt='SAP BTP Expert Profile'
+          width={40}
+          height={40}
+        />
+      )
+    case 'Moderator':
+      return (
+        <Image
+          src='/Moderator.png'
+          alt='SAP Moderator Profile'
+          width={40}
+          height={40}
+        />
+      )
+  }
 }
 
 export function Chat() {
@@ -122,7 +195,7 @@ export function Chat() {
           ...prevMessages,
           {
             sender: 'SAP BTP Expert',
-            text: '⌛️🔃 Searching for information ...'
+            text: '⌛️🔃 Racking my brain ... '
           }
         ])
 
@@ -151,12 +224,11 @@ export function Chat() {
           // Remove the loading message and add the actual response
           setMessages((prevMessages) => [
             ...prevMessages.filter(
-              (msg) => msg.text !== '⌛️🔃 Searching for information ...'
+              (msg) => msg.text !== '⌛️🔃 Racking my brain ... '
             ),
             {
               sender: 'SAP BTP Expert',
               text: newFormatBTPExpertResponse(data.btp_expert_result)
-              // text: data.btp_expert_result
             }
           ])
         } catch (error) {
@@ -164,7 +236,7 @@ export function Chat() {
           // Update messages to show error and remove the loading message
           setMessages((prevMessages) => [
             ...prevMessages.filter(
-              (msg) => msg.text !== `⌛️🔃 Searching for information ... `
+              (msg) => msg.text !== `⌛️🔃 Racking my brain ... `
             )
           ])
         }
@@ -271,13 +343,13 @@ export function Chat() {
   // Function to handle review by v2SAPSeniorConsultant
   const handleReviewBySeniorConsultant = async () => {
     console.log('In handleReviewBySeniorConsultant function')
-    // Only proceed if both outputs are available
-    if (!btpExpertOutput || !saOutput) {
-      console.error(
-        'Waiting for outputs from BTP Expert and Solutions Architect.'
-      )
-      return // Consider adding some user feedback here
-    }
+    // // Only proceed if both outputs are available
+    // if (!btpExpertOutput || !saOutput) {
+    //   console.error(
+    //     'Waiting for outputs from BTP Expert and Solutions Architect.'
+    //   )
+    //   return // Consider adding some user feedback here
+    // }
 
     // Add a loading message for Lead Consultant
     setMessages((prevMessages) => [
@@ -401,7 +473,7 @@ export function Chat() {
       ...prevMessages,
       {
         sender: 'SAP Solutions Architect',
-        text: '⌛️🔃 Refining the solution ...'
+        text: '⌛️🔃 Refining the solution again ...'
       }
     ])
     try {
@@ -430,22 +502,15 @@ export function Chat() {
       // Remove the loading message and add the actual response
       setMessages((prevMessages) => [
         ...prevMessages.filter(
-          (msg) => msg.text !== '⌛️🔃 Refining the solution ...'
+          (msg) => msg.text !== '⌛️🔃 Refining the solution again ...'
         ),
         {
           sender: 'SAP Solutions Architect',
-          // text: formatSolutionsArchitectResponse(
-          //   data.refined_solutions_architect_result
-          // )
-          text: newFormatSolArchitectResponse(
+          text: newFormatBTPExpertResponse(
             data.refined_solutions_architect_result
           )
         }
       ])
-      console.log(
-        'Refined solutions architect result: ' +
-          data.refine_solutions_architect_result
-      )
       setIsSARefinementDone(true)
       setRefinedSolutionsArchitectOutput(
         data.refined_solutions_architect_result
@@ -468,7 +533,7 @@ export function Chat() {
       ...prevMessages,
       {
         sender: 'SAP BTP Expert',
-        text: '⌛️🔃 Refining the solution ...'
+        text: '⌛️🔃 Racking my brain again ...'
       }
     ])
     try {
@@ -497,15 +562,13 @@ export function Chat() {
       // Remove the loading message and add the actual response
       setMessages((prevMessages) => [
         ...prevMessages.filter(
-          (msg) => msg.text !== '⌛️🔃 Refining the solution ...'
+          (msg) => msg.text !== '⌛️🔃 Racking my brain again ...'
         ),
         {
           sender: 'SAP BTP Expert',
-          // text: formatSolutionsArchitectResponse(data.refined_btp_expert_result)
-          text: newFormatSolArchitectResponse(data.refined_btp_expert_result)
+          text: newFormatBTPExpertResponse(data.refined_btp_expert_result)
         }
       ])
-      console.log('Refined BTP expert result: ' + data.refine_btp_expert_result)
       setIsBTPExpertRefinementDone(true)
       setRefinedBTPExpertOutput(data.refined_btp_expert_result)
     } catch (error) {
@@ -574,11 +637,6 @@ export function Chat() {
       setIsBTPExpertRefinementDone(false)
     }
   }, [isSARefinementDone, isBTPExpertRefinementDone])
-
-  // // initialize Mermaid
-  // useEffect(() => {
-  //   mermaid.initialize({ startOnLoad: true })
-  // }, [])
 
   useEffect(() => {
     const finalSaOutput = refinedSolutionsArchitectOutput || saOutput
@@ -715,8 +773,11 @@ export function Chat() {
               message.sender === 'Moderator' ? 'bg-blue-950' : ''
             } ${message.sender === 'Summary' ? 'bg-emerald-950' : ''}`}
           >
-            <CardHeader>
-              <CardTitle className={determineTitleClass(message.sender)}>
+            <CardHeader className='flex flex-row items-start'>
+              {determineProfileImage(message.sender)}
+              <CardTitle
+                className={`${determineTitleClass(message.sender)} ml-3 pt-2`}
+              >
                 {message.sender === 'user'
                   ? 'You'
                   : message.sender === 'Moderator'
@@ -752,7 +813,7 @@ export function Chat() {
             className='flex-grow mr-2'
           />
 
-          <Button type='submit' className='flex-shrink-0'>
+          <Button type='submit' disabled={isLoading} className='flex-shrink-0'>
             {isLoading ? <Spinner /> : 'Ask'}
           </Button>
         </form>
