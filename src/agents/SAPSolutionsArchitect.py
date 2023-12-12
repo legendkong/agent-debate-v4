@@ -107,7 +107,7 @@ def SAPSolutionsArchitect(solutions_architect_task):
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, "html.parser")
             text = soup.get_text()
-            print("CONTENTTTTTT:", text)
+            # print("CONTENTTTTTT:", text)
 
             if len(text) > 10000:
                 output = summary(objective, text)
@@ -138,7 +138,8 @@ def SAPSolutionsArchitect(solutions_architect_task):
             chain_type='map_reduce',
             map_prompt=map_prompt_template,
             combine_prompt=map_prompt_template,
-            verbose=True
+            verbose=False
+            # verbose=True
         )
 
         output = summary_chain.run(input_documents=docs, solutions_architect_task=solutions_architect_task)
@@ -206,7 +207,7 @@ def SAPSolutionsArchitect(solutions_architect_task):
         tools,
         llm,
         agent=AgentType.OPENAI_FUNCTIONS,
-        verbose=True,
+        verbose=False,
         agent_kwargs=agent_kwargs,
         memory=memory,
     )

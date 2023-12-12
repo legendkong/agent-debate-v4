@@ -73,7 +73,7 @@ def v2SAPSolutionsArchitect(previous_solution, critique, solutions_architect_tas
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, "html.parser")
             text = soup.get_text()
-            print("CONTENTTTTTT:", text)
+            # print("CONTENTTTTTT:", text)
 
             if len(text) > 20000:
                 output = summary(objective, text)
@@ -104,7 +104,7 @@ def v2SAPSolutionsArchitect(previous_solution, critique, solutions_architect_tas
             chain_type='map_reduce',
             map_prompt=map_prompt_template,
             combine_prompt=map_prompt_template,
-            verbose=True
+            verbose=False
         )
 
         output = summary_chain.run(input_documents=docs, critique=critique)
@@ -151,9 +151,9 @@ def v2SAPSolutionsArchitect(previous_solution, critique, solutions_architect_tas
                 requests for refinement of your previous solution. You are to revise your previous solution based on the
                 feedback from the SAP Lead Consultant. Your previous solution was: {previous_solution}.
                         
-                The critique and refinement requests from the Lead Consultant were as follows: {critique}
+                The critique and refinement requests from the Lead Consultant are as follows: {critique}.
                         
-                The original task assigned to you by the SAP Lead Consultant is: {solutions_architect_task}
+                The original task assigned to you by the SAP Lead Consultant is: {solutions_architect_task}.
                 Taking this into account, please provide a refined solution that addresses the critique as an add-on to your original solution.
                 
                 Please make sure you complete the objective above with the following rules:
@@ -179,7 +179,7 @@ def v2SAPSolutionsArchitect(previous_solution, critique, solutions_architect_tas
         tools,
         llm,
         agent=AgentType.OPENAI_FUNCTIONS,
-        verbose=True,
+        verbose=False,
         agent_kwargs=agent_kwargs,
         memory=memory,
     )

@@ -66,7 +66,7 @@ def mockSAPBTPExpert(btp_expert_task):
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, "html.parser")
             text = soup.get_text()
-            print("CONTENTTTTTT:", text)
+            # print("CONTENTTTTTT:", text)
 
             if len(text) > 20000:
                 output = summary(objective, text)
@@ -98,7 +98,7 @@ def mockSAPBTPExpert(btp_expert_task):
             chain_type='map_reduce',
             map_prompt=map_prompt_template,
             combine_prompt=map_prompt_template,
-            verbose=True
+            verbose=False
         )
 
         output = summary_chain.run(input_documents=docs, btp_expert_task=btp_expert_task)
@@ -166,7 +166,7 @@ def mockSAPBTPExpert(btp_expert_task):
         tools,
         llm,
         agent=AgentType.OPENAI_FUNCTIONS,
-        verbose=True,
+        verbose=False,
         agent_kwargs=agent_kwargs,
         memory=memory,
     )
