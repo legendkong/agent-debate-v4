@@ -7,34 +7,23 @@ import {
   CardHeader,
   CardTitle
 } from './ui/card'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger
-} from './ui/accordion'
-import { Message } from 'ai/react'
-import ReactMarkdown from 'react-markdown'
-import { formattedText } from '../lib/utils'
 
-// const convertNewLines = (text: string) =>
-//   text.split('\n').map((line, i) => (
-//     <span key={i}>
-//       {line}
-//       <br />
-//     </span>
-//   ))
-
-interface ChatLineProps extends Partial<Message> {
-  sources: string[]
-}
+import Image from 'next/image'
 
 export function SeniorConsultantUI() {
   return (
     <div>
       <Card className='mb-2'>
-        <CardHeader>
-          <CardTitle className={'text-violet-400 dark:text-violet-400'}>
+        <CardHeader className='flex flex-row items-start'>
+          <Image
+            src='/SAPLeadConsultant.png'
+            alt='SAP Lead Consultant Profile'
+            width={40}
+            height={40}
+          />
+          <CardTitle
+            className={'text-violet-400 dark:text-violet-400  ml-3 pt-2'}
+          >
             SAP Lead Consultant
           </CardTitle>
         </CardHeader>
@@ -45,7 +34,7 @@ export function SeniorConsultantUI() {
           </Balancer>
         </CardContent>
         {/* <CardFooter>
-          <CardDescription className='w-full'></CardDescription>
+          <CardDescription className='w-full'>asdas</CardDescription>
         </CardFooter> */}
       </Card>
     </div>
