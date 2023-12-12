@@ -107,11 +107,15 @@ def api_v2_senior_consultant():
     btp_expert_output = data.get('btp_expert_output')
     solutions_architect_output = data.get('solutions_architect_output')
     consulting_question = data.get('consulting_question')
+    critique_for_sa = data.get('critique_for_sa')
+    critique_for_btp = data.get('critique_for_btp')
     
     overall_feedback, needs_refinement = v2SAPSeniorConsultant(
         consulting_question,
         solutions_architect_output,
-        btp_expert_output
+        btp_expert_output,
+        critique_for_sa,
+        critique_for_btp
     )
 
     return jsonify({
@@ -226,7 +230,7 @@ def convert_to_mermaid():
 # @app.route('/api/refine_btp_expert', methods=['POST'])
 # def refine_btp_expert():
 #     data = request.get_json()
-#     critique = data.get('critique')
+#     critique = data.get('critique') 
 #     previous_output = data.get('previous_output')
     
 #     # Logic to refine the BTP expert's output

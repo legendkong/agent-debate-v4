@@ -2,7 +2,7 @@ from utils.openai_util import strict_output
 from config.loadllm import token, svc_url
 from config.dependencies import *
 
-def v2SAPSeniorConsultant(consulting_question, solutions_architect_output, btp_expert_output):
+def v2SAPSeniorConsultant(consulting_question, solutions_architect_output, btp_expert_output, critique_for_sa, critique_for_btp):
     # """
     # Review the solutions provided by the BTP expert and Solutions Architect,
     # critique them, and ask for refinement if necessary.
@@ -13,7 +13,7 @@ def v2SAPSeniorConsultant(consulting_question, solutions_architect_output, btp_e
     
     # Initial review process
     review = strict_output(
-        system_prompt = f'''You are a SAP lead consultant, you are harsh, you are relentless. 
+        system_prompt = f'''You are a SAP lead consultant. You lead a team of two people: the Solutions Architect and the BTP expert.
                             Review the consulting question by the customer and the 
                             following solutions provided by the Solutions Architect and BTP Expert 
                             and provide your critique. If the solutions need refinement, 
@@ -21,7 +21,12 @@ def v2SAPSeniorConsultant(consulting_question, solutions_architect_output, btp_e
                             or refinement needed from either team member, state "No refinement needed.".
                             For example, if there is no critique or refinement needed for the BTP expert,
                             then "Critique for BTP Expert": "No refinement needed". 
+                            You might have already provided critique and refinement requests for both the team members in the previous round, if so, review their new solutions
+                            based on your previous critique and if you think that the solutions are good enough, state "No refinement needed" for that particular team member or both.
+                            If the critique is "nil", it means that that this is the first time you review the solutions provided by the team members, and you are free to provide critique and refinement requests.
                             Consulting question: {consulting_question}
+                            Previous critique for Solutions Architect(if any): {critique_for_sa}
+                            Previous critique for BTP Expert(if any): {critique_for_btp}
                             Solutions Architect's solution: {solutions_architect_output}
                             BTP Expert's solution: {btp_expert_output}''',
         user_prompt = f'''Here are the solutions provided by the team members for the task: "{combined_summary}."''',
