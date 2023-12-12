@@ -96,6 +96,24 @@ function determineProfileImage(sender: any) {
           height={40}
         />
       )
+    case 'Summary':
+      return (
+        <Image
+          src='/SAPModerator.png'
+          alt='SAP Moderator Profile'
+          width={40}
+          height={40}
+        />
+      )
+    case 'Error':
+      return (
+        <Image
+          src='/SAPModerator.png'
+          alt='SAP Moderator Profile'
+          width={40}
+          height={40}
+        />
+      )
   }
 }
 
@@ -117,6 +135,8 @@ export function Chat() {
   const [refinedBTPExpertOutput, setRefinedBTPExpertOutput] = useState('')
   const [moderatorFinished, setModeratorFinished] = useState(false)
   const [isConversationEnded, setIsConversationEnded] = useState(false)
+  const [prevCritiqueForSA, setPrevCritiqueForSA] = useState('nil')
+  const [prevCritiqueForBTP, setPrevCritiqueForBTP] = useState('nil')
   const [mermaidSvg, setMermaidSvg] = useState('')
   const containerRef = useRef<HTMLDivElement | null>(null)
 
@@ -371,7 +391,9 @@ export function Chat() {
           body: JSON.stringify({
             consulting_question: input,
             btp_expert_output: btpExpertOutput,
-            solutions_architect_output: saOutput
+            solutions_architect_output: saOutput,
+            critique_for_sa: prevCritiqueForSA,
+            critique_for_btp: prevCritiqueForBTP
           })
         }
       )
@@ -381,20 +403,22 @@ export function Chat() {
       }
 
       const reviewData = await reviewResponse.json()
-      console.log('Reviewed data by Lead Consultant:' + reviewData)
-      console.log('Overall feedback:' + reviewData.overall_feedback)
-      console.log(
-        'Critique for BTP expert:' +
-          reviewData.overall_feedback['Critique for BTP Expert']
-      )
-      console.log(
-        'Critique for SA:' +
-          reviewData.overall_feedback['Critique for Solutions Architect']
-      )
+      // console.log('Reviewed data by Lead Consultant:' + reviewData)
+      // console.log('Overall feedback:' + reviewData.overall_feedback)
+      // console.log(
+      //   'Critique for BTP expert:' +
+      //     reviewData.overall_feedback['Critique for BTP Expert']
+      // )
+      // console.log(
+      //   'Critique for SA:' +
+      //     reviewData.overall_feedback['Critique for Solutions Architect']
+      // )
       const critiqueForSA =
         reviewData.overall_feedback['Critique for Solutions Architect']
+      setPrevCritiqueForSA(critiqueForSA)
       const critiqueForBTP =
         reviewData.overall_feedback['Critique for BTP Expert']
+      setPrevCritiqueForBTP(critiqueForBTP)
 
       // Function to check if a string contains "no refinement needed" regardless of case and punctuation
       const noRefinementNeeded = (critique: any) => {
@@ -415,7 +439,7 @@ export function Chat() {
       setRefinementCount(newRefinementCount)
 
       // Decide whether to call handleModeration
-      if (!isRefinementNeededNow || newRefinementCount > 2) {
+      if (!isRefinementNeededNow || newRefinementCount > 3) {
         handleModeration()
       }
 
