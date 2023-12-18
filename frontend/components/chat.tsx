@@ -99,7 +99,7 @@ function determineProfileImage(sender: any) {
     case 'Summary':
       return (
         <Image
-          src='/SAPModerator.png'
+          src='/SAPLeadConsultant.png'
           alt='SAP Moderator Profile'
           width={40}
           height={40}
@@ -119,6 +119,7 @@ function determineProfileImage(sender: any) {
 
 export function Chat() {
   const [input, setInput] = useState('') // State to hold the input value
+  const [originalQuestion, setOriginalQuestion] = useState('') // State to hold the original question
   const [isLoading, setIsLoading] = useState(false) // State to manage loading state
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [btpExpertOutput, setBtpExpertOutput] = useState('')
@@ -137,6 +138,8 @@ export function Chat() {
   const [isConversationEnded, setIsConversationEnded] = useState(false)
   const [prevCritiqueForSA, setPrevCritiqueForSA] = useState('nil')
   const [prevCritiqueForBTP, setPrevCritiqueForBTP] = useState('nil')
+  const [isSubsequentUserInput, setIsSubsequentUserInput] = useState(false)
+  const [userQuestion, setUserQuestion] = useState('')
   const [mermaidSvg, setMermaidSvg] = useState('')
   const containerRef = useRef<HTMLDivElement | null>(null)
 
@@ -151,208 +154,217 @@ export function Chat() {
   const handleSubmit = async (event: any) => {
     event.preventDefault() // Prevent the form from causing a page refresh
     setIsLoading(true) // Start loading
+    if (isSubsequentUserInput) {
+      await handleV2Moderation(input)
+      setIsSubsequentUserInput(false)
+    } else {
+      // Add user input as a message
+      const userInputMessage: ChatMessage = { sender: 'user', text: input }
+      setMessages((prevMessages) => [...prevMessages, userInputMessage])
+      setOriginalQuestion(input)
 
-    // Add user input as a message
-    const userInputMessage: ChatMessage = { sender: 'user', text: input }
-    setMessages((prevMessages) => [...prevMessages, userInputMessage])
-
-    // Add a loading message for Lead Consultant
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      {
-        sender: 'SAP Lead Consultant',
-        text: '🙋‍♂️🙋‍♀️ Assigning tasks ...'
-      }
-    ])
-
-    try {
-      const seniorConsultantResponse = await fetch(
-        'http://localhost:8080/api/senior_consultant_post',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ consulting_question: input })
-        }
-      )
-
-      if (!seniorConsultantResponse.ok) {
-        throw new Error(
-          `HTTP error! status: ${seniorConsultantResponse.status}`
-        )
-      }
-
-      const seniorConsultantData = await seniorConsultantResponse.json()
-
+      // Add a loading message for Lead Consultant
       setMessages((prevMessages) => [
-        ...prevMessages.filter(
-          (msg) => msg.text !== '🙋‍♂️🙋‍♀️ Assigning tasks ...'
-        ),
+        ...prevMessages,
         {
           sender: 'SAP Lead Consultant',
-          text: `
+          text: '🙋‍♂️🙋‍♀️ Assigning tasks ...'
+        }
+      ])
+
+      try {
+        const seniorConsultantResponse = await fetch(
+          'http://localhost:8080/api/senior_consultant_post',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ consulting_question: input })
+          }
+        )
+
+        if (!seniorConsultantResponse.ok) {
+          throw new Error(
+            `HTTP error! status: ${seniorConsultantResponse.status}`
+          )
+        }
+
+        const seniorConsultantData = await seniorConsultantResponse.json()
+
+        setMessages((prevMessages) => [
+          ...prevMessages.filter(
+            (msg) => msg.text !== '🙋‍♂️🙋‍♀️ Assigning tasks ...'
+          ),
+          {
+            sender: 'SAP Lead Consultant',
+            text: `
             <p><strong>Scope:</strong> ${seniorConsultantData.scope}</p>
             <br></br>
             <p><strong>BTP Expert Task:</strong> ${seniorConsultantData.btp_scope}</p>
             <br></br>
             <p><strong>Solutions Architect Task:</strong> ${seniorConsultantData.sa_scope}</p>
           `
-        }
-      ])
-
-      setBTPExpertTask(seniorConsultantData.btp_expert_task)
-      setSATask(seniorConsultantData.solutions_architect_task)
-
-      setMessages((prevMessages) => [
-        ...prevMessages.filter((msg) => msg.text !== '🙋‍♂️🙋‍♀️ Assigning tasks ...')
-      ])
-
-      // ********** Function to handle BTP Expert task independently **********
-      const handleBTPExpertTask = async (task: any) => {
-        // Add a loading message for BTP Expert
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          {
-            sender: 'SAP BTP Expert',
-            text: '⌛️🔃 Racking my brain ... '
           }
         ])
 
-        try {
-          const response = await fetch(
-            'http://localhost:8080/api/mock_btp_expert',
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ btp_expert_task: task })
-            }
+        setBTPExpertTask(seniorConsultantData.btp_expert_task)
+        setSATask(seniorConsultantData.solutions_architect_task)
+
+        setMessages((prevMessages) => [
+          ...prevMessages.filter(
+            (msg) => msg.text !== '🙋‍♂️🙋‍♀️ Assigning tasks ...'
           )
+        ])
 
-          if (!response.ok) {
-            throw new Error(
-              `HTTP error from BTP Expert! Status: ${response.status}`
-            )
-          }
-
-          const data = await response.json()
-          console.log('BTP EXPERT DATA:' + data.btp_expert_result)
-          setBtpExpertOutput(data.btp_expert_result)
-
-          // Remove the loading message and add the actual response
+        // ********** Function to handle BTP Expert task independently **********
+        const handleBTPExpertTask = async (task: any) => {
+          // Add a loading message for BTP Expert
           setMessages((prevMessages) => [
-            ...prevMessages.filter(
-              (msg) => msg.text !== '⌛️🔃 Racking my brain ... '
-            ),
+            ...prevMessages,
             {
               sender: 'SAP BTP Expert',
-              text: newFormatBTPExpertResponse(data.btp_expert_result)
+              text: '⌛️🔃 Racking my brain ... '
             }
           ])
-        } catch (error) {
-          console.error('Error from BTP Expert:', error)
-          // Update messages to show error and remove the loading message
-          setMessages((prevMessages) => [
-            ...prevMessages.filter(
-              (msg) => msg.text !== `⌛️🔃 Racking my brain ... `
+
+          try {
+            const response = await fetch(
+              'http://localhost:8080/api/mock_btp_expert',
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ btp_expert_task: task })
+              }
             )
-          ])
+
+            if (!response.ok) {
+              throw new Error(
+                `HTTP error from BTP Expert! Status: ${response.status}`
+              )
+            }
+
+            const data = await response.json()
+            console.log('BTP EXPERT DATA:' + data.btp_expert_result)
+            setBtpExpertOutput(data.btp_expert_result)
+
+            // Remove the loading message and add the actual response
+            setMessages((prevMessages) => [
+              ...prevMessages.filter(
+                (msg) => msg.text !== '⌛️🔃 Racking my brain ... '
+              ),
+              {
+                sender: 'SAP BTP Expert',
+                text: newFormatBTPExpertResponse(data.btp_expert_result)
+              }
+            ])
+          } catch (error) {
+            console.error('Error from BTP Expert:', error)
+            // Update messages to show error and remove the loading message
+            setMessages((prevMessages) => [
+              ...prevMessages.filter(
+                (msg) => msg.text !== `⌛️🔃 Racking my brain ... `
+              )
+            ])
+          }
         }
-      }
 
-      // ********** END OF BTP EXPERT API CALL **********
+        // ********** END OF BTP EXPERT API CALL **********
 
-      // ********** Function to handle Solutions Architect task independently **********
-      const handleSolutionsArchitectTask = async (task: any) => {
-        // Add a loading message for Solutions Architect
+        // ********** Function to handle Solutions Architect task independently **********
+        const handleSolutionsArchitectTask = async (task: any) => {
+          // Add a loading message for Solutions Architect
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            {
+              sender: 'SAP Solutions Architect',
+              text: '⌛️🔃 Searching for information ...'
+            }
+          ])
+
+          try {
+            const response = await fetch(
+              'http://localhost:8080/api/solutions_architect',
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ solutions_architect_task: task })
+              }
+            )
+
+            if (!response.ok) {
+              throw new Error(
+                `HTTP error from Solutions Architect! Status: ${response.status}`
+              )
+            }
+
+            const data = await response.json()
+            console.log(
+              'SOLUTIONS ARCHITECT DATA:',
+              data.solutions_architect_result
+            )
+            setSaOutput(data.solutions_architect_result)
+
+            // Remove the loading message and add the actual response
+            setMessages((prevMessages) => [
+              ...prevMessages.filter(
+                (msg) => msg.text !== '⌛️🔃 Searching for information ...'
+              ),
+              {
+                sender: 'SAP Solutions Architect',
+                // text: formatSolutionsArchitectResponse(
+                text: newFormatBTPExpertResponse(
+                  data.solutions_architect_result
+                )
+              }
+            ])
+          } catch (error) {
+            console.error('Error from Solutions Architect:', error)
+            // Update messages to show error and remove the loading message
+            setMessages((prevMessages) => [
+              ...prevMessages.filter(
+                (msg) => msg.text !== '⌛️🔃 Searching for information ...'
+              ),
+              {
+                sender: 'Error',
+                text: 'An error occurred during the Solutions Architect processing.'
+              }
+            ])
+          }
+        }
+
+        // ********** END OF SOLUTIONS ARCHITECT API CALL **********
+
+        // Start both tasks without waiting for them to complete
+        if (seniorConsultantData.btp_expert_task) {
+          console.log('Handling BTP Expert Task')
+          handleBTPExpertTask(seniorConsultantData.btp_expert_task).catch(
+            console.error
+          )
+        }
+        if (seniorConsultantData.solutions_architect_task) {
+          console.log('Handling Solutions Architect Task')
+          handleSolutionsArchitectTask(
+            seniorConsultantData.solutions_architect_task
+          ).catch(console.error)
+        }
+      } catch (error) {
+        console.error('Error during fetch:', error)
         setMessages((prevMessages) => [
           ...prevMessages,
           {
-            sender: 'SAP Solutions Architect',
-            text: '⌛️🔃 Searching for information ...'
+            sender: 'Error',
+            text: 'An error occurred while processing your request.'
           }
         ])
-
-        try {
-          const response = await fetch(
-            'http://localhost:8080/api/solutions_architect',
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ solutions_architect_task: task })
-            }
-          )
-
-          if (!response.ok) {
-            throw new Error(
-              `HTTP error from Solutions Architect! Status: ${response.status}`
-            )
-          }
-
-          const data = await response.json()
-          console.log(
-            'SOLUTIONS ARCHITECT DATA:',
-            data.solutions_architect_result
-          )
-          setSaOutput(data.solutions_architect_result)
-
-          // Remove the loading message and add the actual response
-          setMessages((prevMessages) => [
-            ...prevMessages.filter(
-              (msg) => msg.text !== '⌛️🔃 Searching for information ...'
-            ),
-            {
-              sender: 'SAP Solutions Architect',
-              // text: formatSolutionsArchitectResponse(
-              text: newFormatBTPExpertResponse(data.solutions_architect_result)
-            }
-          ])
-        } catch (error) {
-          console.error('Error from Solutions Architect:', error)
-          // Update messages to show error and remove the loading message
-          setMessages((prevMessages) => [
-            ...prevMessages.filter(
-              (msg) => msg.text !== '⌛️🔃 Searching for information ...'
-            ),
-            {
-              sender: 'Error',
-              text: 'An error occurred during the Solutions Architect processing.'
-            }
-          ])
-        }
+      } finally {
+        // setIsLoading(false)
+        setInput('') // Clear input field
       }
-
-      // ********** END OF SOLUTIONS ARCHITECT API CALL **********
-
-      // Start both tasks without waiting for them to complete
-      if (seniorConsultantData.btp_expert_task) {
-        console.log('Handling BTP Expert Task')
-        handleBTPExpertTask(seniorConsultantData.btp_expert_task).catch(
-          console.error
-        )
-      }
-      if (seniorConsultantData.solutions_architect_task) {
-        console.log('Handling Solutions Architect Task')
-        handleSolutionsArchitectTask(
-          seniorConsultantData.solutions_architect_task
-        ).catch(console.error)
-      }
-    } catch (error) {
-      console.error('Error during fetch:', error)
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        {
-          sender: 'Error',
-          text: 'An error occurred while processing your request.'
-        }
-      ])
-    } finally {
-      setIsLoading(false)
-      setInput('') // Clear input field
     }
   }
 
@@ -363,13 +375,6 @@ export function Chat() {
   // Function to handle review by v2SAPSeniorConsultant
   const handleReviewBySeniorConsultant = async () => {
     console.log('In handleReviewBySeniorConsultant function')
-    // // Only proceed if both outputs are available
-    // if (!btpExpertOutput || !saOutput) {
-    //   console.error(
-    //     'Waiting for outputs from BTP Expert and Solutions Architect.'
-    //   )
-    //   return // Consider adding some user feedback here
-    // }
 
     // Add a loading message for Lead Consultant
     setMessages((prevMessages) => [
@@ -403,16 +408,6 @@ export function Chat() {
       }
 
       const reviewData = await reviewResponse.json()
-      // console.log('Reviewed data by Lead Consultant:' + reviewData)
-      // console.log('Overall feedback:' + reviewData.overall_feedback)
-      // console.log(
-      //   'Critique for BTP expert:' +
-      //     reviewData.overall_feedback['Critique for BTP Expert']
-      // )
-      // console.log(
-      //   'Critique for SA:' +
-      //     reviewData.overall_feedback['Critique for Solutions Architect']
-      // )
       const critiqueForSA =
         reviewData.overall_feedback['Critique for Solutions Architect']
       setPrevCritiqueForSA(critiqueForSA)
@@ -431,7 +426,7 @@ export function Chat() {
       const refinementNeededForBTP = !noRefinementNeeded(critiqueForBTP)
 
       const isRefinementNeededNow =
-        refinementNeededForSA || refinementNeededForBTP
+        refinementNeededForSA && refinementNeededForBTP
 
       const newRefinementCount = isRefinementNeededNow
         ? refinementCount + 1
@@ -439,7 +434,7 @@ export function Chat() {
       setRefinementCount(newRefinementCount)
 
       // Decide whether to call handleModeration
-      if (!isRefinementNeededNow || newRefinementCount > 3) {
+      if (!isRefinementNeededNow || newRefinementCount > 5) {
         handleModeration()
       }
 
@@ -461,21 +456,17 @@ export function Chat() {
           `
         }
       ])
+      setIsLoading(false)
+      setIsSubsequentUserInput(true) // Set the flag to indicate that the next user input is a subsequent user input
 
       // Check if any refinement is needed
       if (reviewData.needs_refinement) {
-        // If critique for Solutions Architect is provided, call the refinement function
-        if (reviewData.overall_feedback['Critique for Solutions Architect']) {
-          handleSolutionsArchitectRefinement(
-            reviewData.overall_feedback['Critique for Solutions Architect']
-          )
-        }
-        // If critique for BTP Expert is provided, call the refinement function
-        if (reviewData.overall_feedback['Critique for BTP Expert']) {
-          handleBTPExpertRefinement(
-            reviewData.overall_feedback['Critique for BTP Expert']
-          )
-        }
+        // Add the moderator's message to the chat, if any
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { sender: 'Moderator', text: 'Are there any questions so far?' }
+        ])
+        setIsSubsequentUserInput(true) // Set the flag to indicate that the next user input is a subsequent user input
       }
     } catch (error) {
       console.error('Error during Lead Consultant review: ', error)
@@ -653,6 +644,142 @@ export function Chat() {
     }
   }
 
+  // Function to interact with v2Moderator API
+  const handleV2Moderation = async (userInput: any) => {
+    try {
+      const response = await fetch('http://localhost:8080/api/v2_moderator', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_input: input })
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      console.log('v2 moderator data data: ' + data)
+      // console.log('V2 MODERATOR DATA:' + [...data])
+
+      // Add the user's question or statement to the chat
+      setMessages((prevMessages: any) => [
+        ...prevMessages,
+        { sender: 'user', text: input }
+      ])
+      setInput('') // Clear input field
+      console.log('Is question asked? : ' + data.question_asked)
+
+      if (data.question_asked) {
+        // If it's a question, handle it (e.g., forward to the lead consultant)
+        setUserQuestion(userInput)
+        // Add a loading message for Lead Consultant
+        await forwardQuestionToLeadConsultant(userInput)
+      } else {
+        // If not a question, proceed with the refinement process
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            sender: 'SAP Lead Consultant',
+            text: 'Alright👍, my team and I will proceed with the tasks.'
+          }
+        ])
+        proceedWithRefinement()
+      }
+    } catch (error) {
+      console.error('Error during v2 moderation:', error)
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { sender: 'Error', text: 'An error occurred during moderation.' }
+      ])
+    }
+  }
+
+  const forwardQuestionToLeadConsultant = async (question: any) => {
+    // Add a loading message for Lead Consultant
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      {
+        sender: 'SAP Lead Consultant',
+        text: '🧠 Processing your question ...'
+      }
+    ])
+    try {
+      // Prepare the data to be sent to the backend
+      const postData = {
+        consulting_question: originalQuestion, // The original consulting question
+        btp_expert_output: btpExpertOutput,
+        solutions_architect_output: saOutput,
+        critique_for_sa: prevCritiqueForSA,
+        critique_for_btp: prevCritiqueForBTP,
+        user_question: input // The user's follow-up question
+      }
+
+      // Make a POST request to the backend
+      const response = await fetch(
+        'http://localhost:8080/api/v3_senior_consultant',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(postData)
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`)
+      }
+
+      const reviewData = await response.json()
+
+      // Process the response from the lead consultant
+      // Update the chat with the lead consultant's response and any new critiques
+      setMessages((prevMessages) => [
+        ...prevMessages.filter(
+          (msg) => msg.text !== '🧠 Processing your question ...'
+        ), // Remove the loading message
+        {
+          sender: 'SAP Lead Consultant',
+          text: reviewData.overall_feedback['Personal statement']
+        }
+      ])
+
+      // Update critiques for SA and BTP Expert if provided
+      if (reviewData.overall_feedback['Critique for Solutions Architect']) {
+        setPrevCritiqueForSA(
+          reviewData.overall_feedback['Critique for Solutions Architect']
+        )
+      }
+      if (reviewData.overall_feedback['Critique for BTP Expert']) {
+        setPrevCritiqueForBTP(
+          reviewData.overall_feedback['Critique for BTP Expert']
+        )
+      }
+
+      // Check if refinement is needed and proceed accordingly
+      if (reviewData.needs_refinement) {
+        proceedWithRefinement()
+      }
+    } catch (error) {
+      console.error('Error forwarding question to Lead Consultant:', error)
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        {
+          sender: 'Error',
+          text: 'An error occurred while forwarding your question.'
+        }
+      ])
+    }
+  }
+
+  const proceedWithRefinement = () => {
+    // Implement the logic to initiate the refinement process
+    if (prevCritiqueForSA) {
+      handleSolutionsArchitectRefinement(prevCritiqueForSA)
+    }
+    if (prevCritiqueForBTP) {
+      handleBTPExpertRefinement(prevCritiqueForBTP)
+    }
+  }
+
   useEffect(() => {
     if (isSARefinementDone && isBTPExpertRefinementDone) {
       handleReviewBySeniorConsultant()
@@ -729,61 +856,61 @@ export function Chat() {
     }
   }, [moderatorFinished])
 
-  useEffect(() => {
-    const finalSaOutput = refinedSolutionsArchitectOutput || saOutput
+  // useEffect(() => {
+  //   const finalSaOutput = refinedSolutionsArchitectOutput || saOutput
 
-    //fetch mermaid
-    const fetchMermaidDiagram = async () => {
-      try {
-        const response = await fetch(
-          'http://localhost:8080/api/convert_to_mermaid',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ text: finalSaOutput })
-          }
-        )
+  //   //fetch mermaid
+  //   const fetchMermaidDiagram = async () => {
+  //     try {
+  //       const response = await fetch(
+  //         'http://localhost:8080/api/convert_to_mermaid',
+  //         {
+  //           method: 'POST',
+  //           headers: {
+  //             'Content-Type': 'application/json'
+  //           },
+  //           body: JSON.stringify({ text: finalSaOutput })
+  //         }
+  //       )
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`)
-        }
+  //       if (!response.ok) {
+  //         throw new Error(`HTTP error! Status: ${response.status}`)
+  //       }
 
-        const data = await response.json()
+  //       const data = await response.json()
 
-        // Use Mermaid to render the diagram
-        console.log('MERMAID SYNTAX:' + data.mermaidSyntax)
+  //       // Use Mermaid to render the diagram
+  //       console.log('MERMAID SYNTAX:' + data.mermaidSyntax)
 
-        if (data.mermaidSyntax) {
-          // Initialize Mermaid
-          mermaid.initialize({ startOnLoad: true })
+  //       if (data.mermaidSyntax) {
+  //         // Initialize Mermaid
+  //         mermaid.initialize({ startOnLoad: true })
 
-          // Asynchronously render the diagram
-          const renderGraph = async () => {
-            try {
-              const { svg } = await mermaid.render(
-                'generatedGraph',
-                data.mermaidSyntax
-              )
-              setMermaidSvg(svg)
-              console.log('THIS IS THE SVG' + svg)
-            } catch (error) {
-              console.error('Mermaid diagram rendering error:', error)
-            }
-          }
+  //         // Asynchronously render the diagram
+  //         const renderGraph = async () => {
+  //           try {
+  //             const { svg } = await mermaid.render(
+  //               'generatedGraph',
+  //               data.mermaidSyntax
+  //             )
+  //             setMermaidSvg(svg)
+  //             console.log('THIS IS THE SVG' + svg)
+  //           } catch (error) {
+  //             console.error('Mermaid diagram rendering error:', error)
+  //           }
+  //         }
 
-          renderGraph()
-        }
-      } catch (error) {
-        console.error('Error fetching Mermaid diagram:', error)
-      }
-    }
+  //         renderGraph()
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching Mermaid diagram:', error)
+  //     }
+  //   }
 
-    if (finalSaOutput) {
-      fetchMermaidDiagram()
-    }
-  }, [saOutput, refinedSolutionsArchitectOutput])
+  //   if (finalSaOutput) {
+  //     fetchMermaidDiagram()
+  //   }
+  // }, [saOutput, refinedSolutionsArchitectOutput])
 
   return (
     <div className='rounded-2xl border h-[75vh] flex flex-col justify-between'>
