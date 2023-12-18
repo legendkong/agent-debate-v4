@@ -57,7 +57,7 @@ export function newFormatBTPExpertResponse(text: string): string {
 
 export function formatSummaryResponse(scText: any) {
   return `
-      <p style="color: #A78BFA;">SAP Lead Consultant:</p>
+      <p style="color: #A78BFA;"><strong>SAP Lead Consultant:</strong></p>
       <br>
       <p>${scText}</p>
     `
