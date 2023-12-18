@@ -18,7 +18,7 @@ def mermaidConverter(text_description):
                        of steps formatted for a Mermaid flowchart diagram:
                         Text: "{text_description}"''',
                             user_prompt = f'''Do not include any other information other than the 
-                            mermaid syntax, as if the syntax is incorrect, Mermaid
+                            mermaid syntax, because if the syntax is incorrect, Mermaid
                             will fail to parse and render it on the frontend.''', 
                             output_format = {"mermaidSyntax": "Mermaid diagram syntax based on the text"},
                             token=token,
