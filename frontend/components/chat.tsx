@@ -141,6 +141,7 @@ export function Chat() {
   const [isSubsequentUserInput, setIsSubsequentUserInput] = useState(false)
   const [userQuestion, setUserQuestion] = useState('')
   const [mermaidSvg, setMermaidSvg] = useState('')
+  const [mermaidSvgBTP, setMermaidSvgBTP] = useState('')
   const containerRef = useRef<HTMLDivElement | null>(null)
 
   // useEffect hook to trigger the review when both outputs are ready
@@ -249,6 +250,7 @@ export function Chat() {
             const data = await response.json()
             console.log('BTP EXPERT DATA:' + data.btp_expert_result)
             setBtpExpertOutput(data.btp_expert_result)
+            setRefinedBTPExpertOutput(data.btp_expert_result)
 
             // Remove the loading message and add the actual response
             setMessages((prevMessages) => [
@@ -308,6 +310,7 @@ export function Chat() {
               data.solutions_architect_result
             )
             setSaOutput(data.solutions_architect_result)
+            setRefinedSolutionsArchitectOutput(data.solutions_architect_result)
 
             // Remove the loading message and add the actual response
             setMessages((prevMessages) => [
@@ -790,11 +793,14 @@ export function Chat() {
   }, [isSARefinementDone, isBTPExpertRefinementDone])
 
   useEffect(() => {
-    const finalSaOutput = refinedSolutionsArchitectOutput || saOutput
-    const finalBtpExpertOutput = refinedBTPExpertOutput || btpExpertOutput
+    const finalSaOutput = refinedSolutionsArchitectOutput
+    const finalBtpExpertOutput = refinedBTPExpertOutput
 
     const fetchSummary = async () => {
       // Add a loading message for the Summary
+      console.log('In fetchSummary function')
+      console.log('This is the finalSaOutput:' + finalSaOutput)
+      console.log('This is the finalBtpExpertOutput:' + finalBtpExpertOutput)
       setMessages((prevMessages) => [
         ...prevMessages,
         {
@@ -848,16 +854,116 @@ export function Chat() {
         ])
       }
     }
-
     if (moderatorFinished) {
       fetchSummary()
       setModeratorFinished(false) // Reset the state
+
+      //fetch mermaid for solutions architect
+      const fetchMermaidDiagram = async () => {
+        try {
+          const response = await fetch(
+            'http://localhost:8080/api/convert_to_mermaid',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ text: finalSaOutput })
+            }
+          )
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`)
+          }
+
+          const data = await response.json()
+
+          // Use Mermaid to render the diagram
+          console.log('MERMAID SYNTAX:' + data.mermaidSyntax)
+
+          if (data.mermaidSyntax) {
+            // Initialize Mermaid
+            mermaid.initialize({ startOnLoad: true })
+
+            // Asynchronously render the diagram
+            const renderGraph = async () => {
+              try {
+                const { svg } = await mermaid.render(
+                  'generatedGraph',
+                  data.mermaidSyntax
+                )
+                setMermaidSvg(svg)
+                console.log('THIS IS THE SVG' + svg)
+              } catch (error) {
+                console.error('Mermaid diagram rendering error:', error)
+              }
+            }
+
+            renderGraph()
+          }
+        } catch (error) {
+          console.error('Error fetching Mermaid diagram:', error)
+        }
+      }
+
+      //fetch mermaid for btp expert
+      const fetchMermaidDiagramBTP = async () => {
+        try {
+          const response = await fetch(
+            'http://localhost:8080/api/convert_to_mermaid',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ text: finalBtpExpertOutput })
+            }
+          )
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`)
+          }
+
+          const data = await response.json()
+
+          // Use Mermaid to render the diagram
+          console.log('MERMAID SYNTAX:' + data.mermaidSyntax)
+
+          if (data.mermaidSyntax) {
+            // Initialize Mermaid
+            mermaid.initialize({ startOnLoad: true })
+
+            // Asynchronously render the diagram
+            const renderGraph = async () => {
+              try {
+                const { svg } = await mermaid.render(
+                  'generatedGraph',
+                  data.mermaidSyntax
+                )
+                setMermaidSvgBTP(svg)
+                console.log('THIS IS THE SVG' + svg)
+              } catch (error) {
+                console.error('Mermaid diagram rendering error:', error)
+              }
+            }
+
+            renderGraph()
+          }
+        } catch (error) {
+          console.error('Error fetching Mermaid diagram:', error)
+        }
+      }
+
+      if (finalSaOutput && finalBtpExpertOutput) {
+        fetchMermaidDiagram()
+        fetchMermaidDiagramBTP()
+      }
       setIsConversationEnded(true)
     }
   }, [moderatorFinished])
 
   // useEffect(() => {
-  //   const finalSaOutput = refinedSolutionsArchitectOutput || saOutput
+  //   const finalSaOutput = refinedSolutionsArchitectOutput
 
   //   //fetch mermaid
   //   const fetchMermaidDiagram = async () => {
@@ -910,7 +1016,7 @@ export function Chat() {
   //   if (finalSaOutput) {
   //     fetchMermaidDiagram()
   //   }
-  // }, [saOutput, refinedSolutionsArchitectOutput])
+  // }, [refinedSolutionsArchitectOutput])
 
   return (
     <div className='rounded-2xl border h-[75vh] flex flex-col justify-between'>
@@ -943,8 +1049,26 @@ export function Chat() {
               {message.sender === 'Summary' ? (
                 <>
                   <div dangerouslySetInnerHTML={{ __html: message.text }} />
+                  <p className='text-blue-300 text-sm'>
+                    <br></br>
+                    <br></br>
+                    <strong>
+                      SAP Solution Architect&apos;s Mermaid diagram:
+                    </strong>
+                  </p>
                   <div
                     dangerouslySetInnerHTML={{ __html: mermaidSvg }}
+                    className='my-4'
+                  />
+                  <br></br>
+                  <br></br>
+                  <p className='text-green-300 text-sm'>
+                    <br></br>
+                    <br></br>
+                    <strong>SAP BTP Expert&apos;s Mermaid diagram:</strong>
+                  </p>
+                  <div
+                    dangerouslySetInnerHTML={{ __html: mermaidSvgBTP }}
                     className='my-4'
                   />
                 </>
