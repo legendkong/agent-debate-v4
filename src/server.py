@@ -12,6 +12,8 @@ from agents.Moderator import Moderator
 from agents.mockSAPBTPExpert import mockSAPBTPExpert
 from agents.summarizeSeniorConsultant import summarizeSeniorConsultant
 from agents.mermaidConverter import mermaidConverter
+from agents.v2Moderator import v2Moderator
+from agents.v3SAPSeniorConsultant import v3SAPSeniorConsultant
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
@@ -122,8 +124,7 @@ def api_v2_senior_consultant():
         'overall_feedback': overall_feedback,
         'needs_refinement': needs_refinement
     })
-    
-    
+
     
 @app.route('/api/refine_solutions_architect', methods=['POST'])
 def refine_solutions_architect():
@@ -208,35 +209,53 @@ def convert_to_mermaid():
         print(e)
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/v2_moderator', methods=['POST'])
+def handle_v2_moderation():
+    data = request.get_json()
+    user_input = data.get('user_input')
+    print("User input:", user_input)
 
+    question_asked, answer = v2Moderator(user_input)
 
+    return jsonify({
+        'question_asked': question_asked,
+        'answer': answer
+    })
 
+# (Address customer question) v3 Lead Consultant response to customer question and to solutions from BTP expert and solutions architect
+@app.route('/api/v3_senior_consultant', methods=['POST'])
+def api_v3_senior_consultant():
+    data = request.get_json()
+    btp_expert_output = data.get('btp_expert_output')
+    solutions_architect_output = data.get('solutions_architect_output')
+    consulting_question = data.get('consulting_question')
+    critique_for_sa = data.get('critique_for_sa')
+    critique_for_btp = data.get('critique_for_btp')
+    user_question = data.get('user_question')
+    print("Original Consulting question:", consulting_question)
+    print("User question:", user_question)
+    print("Solutions architect output:", solutions_architect_output)
+    print("BTP expert output:", btp_expert_output)
+    print("Critique for SA:", critique_for_sa)
+    print("Critique for BTP:", critique_for_btp)
 
-
-
-# # Refinement of solutions architect's output
-# @app.route('/api/refine_solutions_architect', methods=['POST'])
-# def refine_solutions_architect():
-#     data = request.get_json()
-#     critique = data.get('critique')
-#     previous_output = data.get('previous_output')
     
-#     # Logic to refine the solution architect's output
-#     refined_output = some_refinement_function(previous_output, critique)
-    
-#     return jsonify({'refined_solution': refined_output})
+    overall_feedback, needs_refinement = v3SAPSeniorConsultant(
+        consulting_question,
+        solutions_architect_output,
+        btp_expert_output,
+        critique_for_sa,
+        critique_for_btp,
+        user_question
+    )
 
-# # Refinement of BTP expert's output
-# @app.route('/api/refine_btp_expert', methods=['POST'])
-# def refine_btp_expert():
-#     data = request.get_json()
-#     critique = data.get('critique') 
-#     previous_output = data.get('previous_output')
+    return jsonify({
+        'overall_feedback': overall_feedback,
+        'needs_refinement': needs_refinement
+    })
     
-#     # Logic to refine the BTP expert's output
-#     refined_output = some_other_refinement_function(previous_output, critique)
     
-#     return jsonify({'refined_solution': refined_output})
+
 
 
 if __name__ == '__main__':
