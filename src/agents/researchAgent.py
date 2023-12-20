@@ -16,7 +16,6 @@ import requests
 import json
 from langchain.schema import SystemMessage
 from llm_commons.langchain.proxy import init_llm, init_embedding_model, ChatOpenAI
-import streamlit as st
 # from fastapi import FastAPI
 
 load_dotenv()

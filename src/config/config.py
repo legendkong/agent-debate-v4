@@ -1,5 +1,6 @@
 # Query format
 # query = 'SAP BTP related information'
+import llm_commons.langchain as proxy
 
 # Keywords to be contained in secondary sites.
 # Will add url to list if any one matches. Secondary sites defined as links that are on the urls from Google Search

@@ -50,6 +50,8 @@ from bs4 import BeautifulSoup
 import requests
 import json
 from langchain.schema import SystemMessage
+# from llm_commons.proxy.base import set_proxy_version
+# set_proxy_version('btp')
 from llm_commons.langchain.proxy import init_llm, init_embedding_model, ChatOpenAI
 
 ###############################
