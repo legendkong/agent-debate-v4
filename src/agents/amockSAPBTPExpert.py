@@ -1,5 +1,4 @@
 from config.dependencies import *
-from config.config import output_format, curated_format
 from utils.openai_util import strict_output
 from config.loadllm import token, svc_url
 

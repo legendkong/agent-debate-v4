@@ -1,5 +1,5 @@
 import requests
-from src.config.dependencies import timeout
+from config.dependencies import timeout
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 from selenium import webdriver

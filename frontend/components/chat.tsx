@@ -708,7 +708,7 @@ export function Chat() {
       }
     ])
     try {
-      // Prepare the data to be sent to the backend
+      // Prepare the data to be sent to the localhost
       const postData = {
         consulting_question: originalQuestion, // The original consulting question
         btp_expert_output: btpExpertOutput,
@@ -718,7 +718,7 @@ export function Chat() {
         user_question: input // The user's follow-up question
       }
 
-      // Make a POST request to the backend
+      // Make a POST request to the localhost
       const response = await fetch(
         'http://localhost:8080/api/v3_senior_consultant',
         {

@@ -1,10 +1,10 @@
 import os
-from src.config.dependencies import *
+from config.dependencies import *
 from dotenv import load_dotenv
-from src.config.config import keyword_list, unwanted_url, max_url_per_site, num_google_queries, twenty, output_format, base_index
-from src.utils.webdriver_util import start_driver
-from src.utils.openai_util import strict_output
-from src.utils.scraping_util import extract_unique_urls, get_root_url, spaced_text, view_url
+from config.config import keyword_list, unwanted_url, max_url_per_site, num_google_queries, twenty, output_format, base_index
+from utils.webdriver_util import start_driver
+from utils.openai_util import strict_output
+from utils.scraping_util import extract_unique_urls, get_root_url, spaced_text, view_url
 from agents.SAPBTPExpert import SAPBTPExpert
 from agents.SAPSeniorConsultant import SAPSeniorConsultant
 from agents.SAPSolutionsArchitect import SAPSolutionsArchitect

@@ -1,6 +1,6 @@
 import openai
 import os
-from src.config.dependencies import *
+from config.dependencies import *
 from dotenv import load_dotenv
 
 load_dotenv()

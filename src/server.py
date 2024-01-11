@@ -16,7 +16,8 @@ from agents.v2Moderator import v2Moderator
 from agents.v3SAPSeniorConsultant import v3SAPSeniorConsultant
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
+# CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
+CORS(app, resources={r"/*": {"origins": ["http://localhost:3000"]}})
  # Enable CORS for all routes
 
 @app.route('/')
@@ -259,5 +260,5 @@ def api_v3_senior_consultant():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8080)
+    app.run(host='0.0.0.0', debug=True, port=8080)
 
