@@ -1,9 +1,6 @@
-import os
-from dotenv import load_dotenv
-from src.config.dependencies import *
-from src.utils.openai_util import strict_output
-from src.config.loadllm import token, svc_url
-import time
+from config.dependencies import *
+from utils.openai_util import strict_output
+from config.loadllm import token, svc_url
 
 ###############################
 # SAP Lead Consultant Agent 
@@ -17,9 +14,6 @@ import time
 # To-consider: Asking the customer for more information if the request is too vague.
 ###############################
 
-
-# Load environment variables
-load_dotenv()
 
 # def gather_user_input():
 #     #  Gather input from the user (representing the customer agent).

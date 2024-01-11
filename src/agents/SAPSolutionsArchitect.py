@@ -1,36 +1,3 @@
-# from config.dependencies import *
-# from config.config import output_format, curated_format
-# from utils.openai_util import strict_output
-# from config.loadllm import token, svc_url
-
-# ###############################
-# # SAP Solutions Architect (WIP)
-# # For now, it is the same as the SAP BTP Expert.
-# ###############################
-
-
-# def SAPSolutionsArchitect(solutions_architect_task):
-    
-#    print("\n\033[34mSAP Solutions Architect\033[0m is cracking his head and thinking of the best solution(s) ...")
-
-   
-#    res = strict_output(system_prompt = f'''You are a SAP Application/Solutions Architect, 
-#                             with a deep expertise in the field of crafting solutions in SAP environments.
-#                             You play a critical role in ensuring tha the SAP applications are designed and
-#                             configured in a manner that meets a client's needs while being robust, scalable,
-#                             and easily maintainable. You report to the SAP Lead Consultant, who has 
-#                             assigned you the following task: {solutions_architect_task}.
-#                             You are to provide solution(s) to the task assigned to you by the SAP Lead Consultant.
-#                             Be more technical in your explanation. Quote the website of the source if there is any.''',
-#                             user_prompt = f'''Task assigned to you: {solutions_architect_task}''', 
-#                             output_format = {"Solution": "Full description of the steps for the customer to execute"},
-#                             token=token,
-#                             svc_url=svc_url)
- 
-#    steps = res['Solution']
-#    print(steps)
-#    return steps
-
 
 from config.dependencies import *
 import os
@@ -38,7 +5,6 @@ from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
 from langchain.agents import initialize_agent, Tool
 from langchain.agents import AgentType
-# from langchain.chat_models import ChatOpenAI
 from langchain.prompts import MessagesPlaceholder
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -50,9 +16,14 @@ from bs4 import BeautifulSoup
 import requests
 import json
 from langchain.schema import SystemMessage
-# from llm_commons.proxy.base import set_proxy_version
-# set_proxy_version('btp')
-from llm_commons.langchain.proxy import init_llm, init_embedding_model, ChatOpenAI
+from llm_commons.langchain.proxy import init_llm
+from llm_commons.proxy.base import set_proxy_version
+set_proxy_version('btp') # for an BTP proxy
+from llm_commons.btp_llm.identity import BTPProxyClient
+
+
+BTP_PROXY_CLIENT = BTPProxyClient()
+
 
 ###############################
 # SAP Solutions Architect using langchain
@@ -64,6 +35,7 @@ def SAPSolutionsArchitect(solutions_architect_task):
     load_dotenv()
     browserless_api_key = os.getenv("BROWSERLESS_API_KEY")
     serper_api_key = os.getenv("SERP_API_KEY")
+    deployment_id = 'gpt-4-32k'
 
     # 1. Tool for search
     def search(query):
@@ -119,9 +91,11 @@ def SAPSolutionsArchitect(solutions_architect_task):
         else:
             print(f"HTTP request failed with status code {response.status_code}")
 
-
     def summary(solutions_architect_task, content):
-        llm = ChatOpenAI(temperature=0, deployment_id="gpt-4-32k")
+       
+
+        # llm = ChatOpenAI(temperature=0, deployment_id="gpt-4-32k")
+        llm = init_llm(deployment_id=deployment_id, temperature=0, max_tokens=5000)
 
         text_splitter = RecursiveCharacterTextSplitter(
             separators=["\n\n", "\n"], chunk_size=10000, chunk_overlap=500)
@@ -201,7 +175,8 @@ def SAPSolutionsArchitect(solutions_architect_task):
         "system_message": system_message,
     }
 
-    llm = ChatOpenAI(temperature=0, deployment_id='gpt-4-32k')
+    # llm = ChatOpenAI(temperature=0, deployment_id='gpt-4-32k')
+    llm = init_llm(deployment_id=deployment_id, temperature=0, max_tokens=5000)
     memory = ConversationSummaryBufferMemory(
         memory_key="memory", return_messages=True, llm=llm, max_token_limit=1000)
 

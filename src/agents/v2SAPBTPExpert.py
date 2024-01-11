@@ -15,6 +15,14 @@ import requests
 import json
 from langchain.schema import SystemMessage
 from llm_commons.langchain.proxy import ChatOpenAI
+from llm_commons.proxy.base import set_proxy_version
+set_proxy_version('btp') # for an AI Core proxy
+from llm_commons.btp_llm.identity import BTPProxyClient
+from llm_commons.langchain.proxy import init_llm
+
+
+BTP_PROXY_CLIENT = BTPProxyClient()
+
 
 def v2SAPBTPExpert(previous_solution, critique, btp_expert_task):
     
@@ -85,7 +93,8 @@ def v2SAPBTPExpert(previous_solution, critique, btp_expert_task):
 
 
     def summary(critique, content):
-        llm = ChatOpenAI(temperature=0, deployment_id="gpt-4-32k")
+        # llm = ChatOpenAI(temperature=0, deployment_id="gpt-4-32k")
+        llm = init_llm('gpt-4-32k', temperature=0, max_tokens=5000)
 
         text_splitter = RecursiveCharacterTextSplitter(
             separators=["\n\n", "\n"], chunk_size=20000, chunk_overlap=1000)
@@ -171,7 +180,8 @@ def v2SAPBTPExpert(previous_solution, critique, btp_expert_task):
         "system_message": system_message,
     }
 
-    llm = ChatOpenAI(temperature=0, deployment_id='gpt-4-32k')
+    # llm = ChatOpenAI(temperature=0, deployment_id='gpt-4-32k')
+    llm = init_llm('gpt-4-32k', temperature=0, max_tokens=5000)
     memory = ConversationSummaryBufferMemory(
         memory_key="memory", return_messages=True, llm=llm, max_token_limit=5000)
 

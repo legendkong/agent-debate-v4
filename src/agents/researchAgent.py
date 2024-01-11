@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
 from langchain.agents import initialize_agent, Tool
 from langchain.agents import AgentType
-# from langchain.chat_models import ChatOpenAI
 from langchain.prompts import MessagesPlaceholder
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -15,8 +14,14 @@ from bs4 import BeautifulSoup
 import requests
 import json
 from langchain.schema import SystemMessage
-from llm_commons.langchain.proxy import init_llm, init_embedding_model, ChatOpenAI
-# from fastapi import FastAPI
+from llm_commons.langchain.proxy import init_llm
+from llm_commons.proxy.base import set_proxy_version
+set_proxy_version('btp') # for an AI Core proxy
+from llm_commons.btp_llm.identity import BTPProxyClient
+
+
+BTP_PROXY_CLIENT = BTPProxyClient()
+
 
 load_dotenv()
 browserless_api_key = os.getenv("BROWSERLESS_API_KEY")
@@ -81,8 +86,9 @@ def scrape_website(objective: str, url: str):
 
 
 def summary(objective, content):
-    llm = ChatOpenAI(temperature=0, deployment_id="gpt-4-32k")
-
+    # llm = ChatOpenAI(temperature=0, deployment_id="gpt-4-32k")
+    llm = init_llm('gpt-4-32k', temperature=0, max_tokens=5000)
+      
     text_splitter = RecursiveCharacterTextSplitter(
         separators=["\n\n", "\n"], chunk_size=10000, chunk_overlap=500)
     docs = text_splitter.create_documents([content])
@@ -157,7 +163,8 @@ agent_kwargs = {
     "system_message": system_message,
 }
 
-llm = ChatOpenAI(temperature=0, deployment_id='gpt-4-32k')
+# llm = ChatOpenAI(temperature=0, deployment_id='gpt-4-32k')
+llm = init_llm('gpt-4-32k', temperature=0, max_tokens=5000)
 memory = ConversationSummaryBufferMemory(
     memory_key="memory", return_messages=True, llm=llm, max_token_limit=1000)
 
