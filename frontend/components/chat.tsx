@@ -13,9 +13,7 @@ import {
   newFormatBTPExpertResponse,
   formatSummaryResponse,
   newFormatSolArchitectResponse
-} from 'lib/formatResponse'
-// import { determineTitleClass } from 'lib/determineTitleClass'
-// import { determineProfileImage } from 'lib/determineProfileImage'
+} from '../lib/formatResponse'
 
 type ChatMessage = {
   sender:
