@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - '3000:3000' # Change the ports if your frontend runs on a different port
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development # Set your environment variables here
+
+  backend:
+    build: .
+    ports:
+      - '8080:8080' # Assuming the backend runs on port 8080
+    volumes:
+      - .:/code
+    env_file:
+      - .env
