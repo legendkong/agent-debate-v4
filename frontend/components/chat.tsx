@@ -11,8 +11,7 @@ import Image from 'next/image'
 import mermaid from 'mermaid'
 import {
   newFormatBTPExpertResponse,
-  formatSummaryResponse,
-  newFormatSolArchitectResponse
+  formatSummaryResponse
 } from '../lib/formatResponse'
 
 type ChatMessage = {
@@ -143,6 +142,12 @@ export function Chat() {
   const [mermaidSvgBTP, setMermaidSvgBTP] = useState('')
   const containerRef = useRef<HTMLDivElement | null>(null)
 
+  // Determine the backend URL based on the environment
+  const backendUrl =
+    process.env.NODE_ENV === 'development'
+      ? 'http://localhost:8080'
+      : 'https://agent-debate-backend.c-290ae5b.kyma.shoot.live.k8s-hana.ondemand.com'
+
   // useEffect hook to trigger the review when both outputs are ready
   useEffect(() => {
     if (btpExpertOutput && saOutput) {
@@ -174,7 +179,7 @@ export function Chat() {
 
       try {
         const seniorConsultantResponse = await fetch(
-          'http://localhost:8080/api/senior_consultant_post',
+          `${backendUrl}/api/senior_consultant_post`,
           {
             method: 'POST',
             headers: {
@@ -229,16 +234,13 @@ export function Chat() {
           ])
 
           try {
-            const response = await fetch(
-              'http://localhost:8080/api/mock_btp_expert',
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ btp_expert_task: task })
-              }
-            )
+            const response = await fetch(`${backendUrl}/api/mock_btp_expert`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ btp_expert_task: task })
+            })
 
             if (!response.ok) {
               throw new Error(
@@ -287,7 +289,7 @@ export function Chat() {
 
           try {
             const response = await fetch(
-              'http://localhost:8080/api/solutions_architect',
+              `${backendUrl}/api/solutions_architect`,
               {
                 method: 'POST',
                 headers: {
@@ -389,7 +391,7 @@ export function Chat() {
 
     try {
       const reviewResponse = await fetch(
-        'http://localhost:8080/api/v2_senior_consultant',
+        `${backendUrl}/api/v2_senior_consultant`,
         {
           method: 'POST',
           headers: {
@@ -495,7 +497,7 @@ export function Chat() {
     ])
     try {
       const response = await fetch(
-        'http://localhost:8080/api/refine_solutions_architect',
+        `${backendUrl}/api/refine_solutions_architect`,
         {
           method: 'POST',
           headers: {
@@ -554,21 +556,18 @@ export function Chat() {
       }
     ])
     try {
-      const response = await fetch(
-        'http://localhost:8080/api/refine_btp_expert',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            previous_solution: btpExpertOutput,
-            critique: critique,
-            btp_expert_task:
-              BTPExpertTask /* The original task assigned to the BTP Expert */
-          })
-        }
-      )
+      const response = await fetch(`${backendUrl}/api/refine_btp_expert`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          previous_solution: btpExpertOutput,
+          critique: critique,
+          btp_expert_task:
+            BTPExpertTask /* The original task assigned to the BTP Expert */
+        })
+      })
 
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
@@ -603,19 +602,16 @@ export function Chat() {
   // function to handle moderation by moderator
   const handleModeration = async () => {
     try {
-      const response = await fetch(
-        'http://localhost:8080/api/moderate_conversation',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            refinement_needed: isRefinementNeeded,
-            refinement_count: refinementCount
-          })
-        }
-      )
+      const response = await fetch(`${backendUrl}/api/moderate_conversation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          refinement_needed: isRefinementNeeded,
+          refinement_count: refinementCount
+        })
+      })
 
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
@@ -649,7 +645,7 @@ export function Chat() {
   // Function to interact with v2Moderator API
   const handleV2Moderation = async (userInput: any) => {
     try {
-      const response = await fetch('http://localhost:8080/api/v2_moderator', {
+      const response = await fetch(`${backendUrl}/api/v2_moderator`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_input: input })
@@ -717,14 +713,11 @@ export function Chat() {
       }
 
       // Make a POST request to the localhost
-      const response = await fetch(
-        'http://localhost:8080/api/v3_senior_consultant',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(postData)
-        }
-      )
+      const response = await fetch(`${backendUrl}/api/v3_senior_consultant`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(postData)
+      })
 
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
@@ -809,7 +802,7 @@ export function Chat() {
       ])
 
       try {
-        const response = await fetch('http://localhost:8080/api/summarize', {
+        const response = await fetch(`${backendUrl}/api/summarize`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -860,16 +853,13 @@ export function Chat() {
       //fetch mermaid for solutions architect
       const fetchMermaidDiagram = async () => {
         try {
-          const response = await fetch(
-            'http://localhost:8080/api/convert_to_mermaid',
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ text: finalSaOutput })
-            }
-          )
+          const response = await fetch(`${backendUrl}/api/convert_to_mermaid`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ text: finalSaOutput })
+          })
 
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`)
@@ -908,16 +898,13 @@ export function Chat() {
       //fetch mermaid for btp expert
       const fetchMermaidDiagramBTP = async () => {
         try {
-          const response = await fetch(
-            'http://localhost:8080/api/convert_to_mermaid',
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ text: finalBtpExpertOutput })
-            }
-          )
+          const response = await fetch(`${backendUrl}/api/convert_to_mermaid`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ text: finalBtpExpertOutput })
+          })
 
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`)
@@ -960,62 +947,6 @@ export function Chat() {
       setIsConversationEnded(true)
     }
   }, [moderatorFinished])
-
-  // useEffect(() => {
-  //   const finalSaOutput = refinedSolutionsArchitectOutput
-
-  //   //fetch mermaid
-  //   const fetchMermaidDiagram = async () => {
-  //     try {
-  //       const response = await fetch(
-  //         'http://localhost:8080/api/convert_to_mermaid',
-  //         {
-  //           method: 'POST',
-  //           headers: {
-  //             'Content-Type': 'application/json'
-  //           },
-  //           body: JSON.stringify({ text: finalSaOutput })
-  //         }
-  //       )
-
-  //       if (!response.ok) {
-  //         throw new Error(`HTTP error! Status: ${response.status}`)
-  //       }
-
-  //       const data = await response.json()
-
-  //       // Use Mermaid to render the diagram
-  //       console.log('MERMAID SYNTAX:' + data.mermaidSyntax)
-
-  //       if (data.mermaidSyntax) {
-  //         // Initialize Mermaid
-  //         mermaid.initialize({ startOnLoad: true })
-
-  //         // Asynchronously render the diagram
-  //         const renderGraph = async () => {
-  //           try {
-  //             const { svg } = await mermaid.render(
-  //               'generatedGraph',
-  //               data.mermaidSyntax
-  //             )
-  //             setMermaidSvg(svg)
-  //             console.log('THIS IS THE SVG' + svg)
-  //           } catch (error) {
-  //             console.error('Mermaid diagram rendering error:', error)
-  //           }
-  //         }
-
-  //         renderGraph()
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching Mermaid diagram:', error)
-  //     }
-  //   }
-
-  //   if (finalSaOutput) {
-  //     fetchMermaidDiagram()
-  //   }
-  // }, [refinedSolutionsArchitectOutput])
 
   return (
     <div className='rounded-2xl border h-[75vh] flex flex-col justify-between'>

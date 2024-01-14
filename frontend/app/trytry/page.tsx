@@ -1,7 +1,7 @@
 'use client'
 
-import { DarkModeToggle } from 'components/dark-mode-toggle'
-import { Chat } from 'components/chat'
+import { DarkModeToggle } from '../../components/dark-mode-toggle'
+import { Chat } from '../../components/chat'
 import Image from 'next/image'
 
 export default function Page() {
