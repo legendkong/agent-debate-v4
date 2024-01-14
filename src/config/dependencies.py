@@ -1,7 +1,3 @@
-from urllib.parse import urlparse
-import pandas as pd
-
-
 # No information default
 NO_INFO = "No info"
 
