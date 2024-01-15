@@ -140,6 +140,8 @@ export function Chat() {
   const [userQuestion, setUserQuestion] = useState('')
   const [mermaidSvg, setMermaidSvg] = useState('')
   const [mermaidSvgBTP, setMermaidSvgBTP] = useState('')
+  const [mermaidErrorSA, setMermaidErrorSA] = useState('') // Error for SA
+  const [mermaidErrorBTP, setMermaidErrorBTP] = useState('') // Error for BTP
   const containerRef = useRef<HTMLDivElement | null>(null)
 
   // Determine the backend URL based on the environment
@@ -885,13 +887,18 @@ export function Chat() {
                 console.log('THIS IS THE SVG' + svg)
               } catch (error) {
                 console.error('Mermaid diagram rendering error:', error)
+                setMermaidErrorSA(
+                  '⚠️ An error occurred rendering the mermaid diagram for the Solutions Architect.'
+                )
               }
             }
-
             renderGraph()
           }
         } catch (error) {
           console.error('Error fetching Mermaid diagram:', error)
+          setMermaidErrorSA(
+            '⚠️ An error occurred rendering the mermaid diagram.'
+          )
         }
       }
 
@@ -930,6 +937,9 @@ export function Chat() {
                 console.log('THIS IS THE SVG' + svg)
               } catch (error) {
                 console.error('Mermaid diagram rendering error:', error)
+                setMermaidErrorBTP(
+                  '⚠️ An error occurred rendering the mermaid diagram for the BTP Expert.'
+                )
               }
             }
 
@@ -937,6 +947,9 @@ export function Chat() {
           }
         } catch (error) {
           console.error('Error fetching Mermaid diagram:', error)
+          setMermaidErrorBTP(
+            '⚠️ An error occurred rendering the mermaid diagram for the BTP Expert.'
+          )
         }
       }
 
@@ -986,10 +999,14 @@ export function Chat() {
                       SAP Solution Architect&apos;s Mermaid diagram:
                     </strong>
                   </p>
-                  <div
-                    dangerouslySetInnerHTML={{ __html: mermaidSvg }}
-                    className='my-4'
-                  />
+                  {mermaidSvg ? (
+                    <div
+                      dangerouslySetInnerHTML={{ __html: mermaidSvg }}
+                      className='my-4'
+                    />
+                  ) : (
+                    <p>{mermaidErrorSA}</p>
+                  )}
                   <br></br>
                   <br></br>
                   <p className='text-green-300 text-sm'>
@@ -997,10 +1014,14 @@ export function Chat() {
                     <br></br>
                     <strong>SAP BTP Expert&apos;s Mermaid diagram:</strong>
                   </p>
-                  <div
-                    dangerouslySetInnerHTML={{ __html: mermaidSvgBTP }}
-                    className='my-4'
-                  />
+                  {mermaidSvgBTP ? (
+                    <div
+                      dangerouslySetInnerHTML={{ __html: mermaidSvgBTP }}
+                      className='my-4'
+                    />
+                  ) : (
+                    <p>{mermaidErrorBTP}</p>
+                  )}
                 </>
               ) : (
                 <div dangerouslySetInnerHTML={{ __html: message.text }} />
