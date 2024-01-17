@@ -20,9 +20,26 @@ from llm_commons.langchain.proxy import init_llm
 from llm_commons.proxy.base import set_proxy_version
 set_proxy_version('btp') # for an BTP proxy
 from llm_commons.btp_llm.identity import BTPProxyClient
+from tenacity import retry, wait_fixed, stop_after_attempt, retry_if_exception_type
 
 
 BTP_PROXY_CLIENT = BTPProxyClient()
+
+# Define retry strategy
+@retry(
+    wait=wait_fixed(20),  # wait for 2 seconds between retries
+    stop=stop_after_attempt(5),  # give up after 5 attempts
+    retry=retry_if_exception_type(Exception)  # only retry on APIError
+)
+def call_langchain_agent_with_retry(agent, task):
+    # Wrap the agent call in a try-except block
+    try:
+        return agent({"input": task})
+    except Exception as e:  # Catching a general exception
+        # You can log the exception here if you want
+        print(f"API call failed with exception: {e}")
+        # Reraise the exception to trigger the retry
+        raise
 
 
 ###############################
@@ -35,7 +52,6 @@ def SAPSolutionsArchitect(solutions_architect_task):
     load_dotenv()
     browserless_api_key = os.getenv("BROWSERLESS_API_KEY")
     serper_api_key = os.getenv("SERP_API_KEY")
-    deployment_id = 'gpt-4-32k'
 
     # 1. Tool for search
     def search(query):
@@ -81,9 +97,8 @@ def SAPSolutionsArchitect(solutions_architect_task):
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, "html.parser")
             text = soup.get_text()
-            # print("CONTENTTTTTT:", text)
 
-            if len(text) > 10000:
+            if len(text) > 20000:
                 output = summary(objective, text)
                 return output
             else:
@@ -95,13 +110,14 @@ def SAPSolutionsArchitect(solutions_architect_task):
        
 
         # llm = ChatOpenAI(temperature=0, deployment_id="gpt-4-32k")
-        llm = init_llm(deployment_id=deployment_id, temperature=0, max_tokens=5000)
+        llm = init_llm(model_name='gpt-4-32k',deployment_id='gpt-4-32k', auth_url='',proxy_client=BTP_PROXY_CLIENT, temperature=0, max_tokens=5000)
 
         text_splitter = RecursiveCharacterTextSplitter(
             separators=["\n\n", "\n"], chunk_size=10000, chunk_overlap=500)
         docs = text_splitter.create_documents([content])
         map_prompt = """
-        Write a comprehensive overview of the following text for {solutions_architect_task}. Only address the Solutions Architect Task. You do not need to other stuffs in the scope. 
+        Write a comprehensive overview of the following text for {solutions_architect_task}. 
+        Only address the Solutions Architect Task. You do not need to other stuffs in the scope. 
         Do not leave out any technical details such as API names, technical terms, etc.:
         "{text}"
         SUMMARY:
@@ -115,7 +131,6 @@ def SAPSolutionsArchitect(solutions_architect_task):
             map_prompt=map_prompt_template,
             combine_prompt=map_prompt_template,
             verbose=False
-            # verbose=True
         )
 
         output = summary_chain.run(input_documents=docs, solutions_architect_task=solutions_architect_task)
@@ -176,9 +191,9 @@ def SAPSolutionsArchitect(solutions_architect_task):
     }
 
     # llm = ChatOpenAI(temperature=0, deployment_id='gpt-4-32k')
-    llm = init_llm(deployment_id=deployment_id, temperature=0, max_tokens=5000)
+    llm = init_llm(model_name='gpt-4-32k', deployment_id='gpt-4-32k', proxy_client=BTP_PROXY_CLIENT ,temperature=0, max_tokens=5000, top_p=1)
     memory = ConversationSummaryBufferMemory(
-        memory_key="memory", return_messages=True, llm=llm, max_token_limit=1000)
+        memory_key="memory", return_messages=True, llm=llm, max_token_limit=5000)
 
     agent = initialize_agent(
         tools,
@@ -188,18 +203,9 @@ def SAPSolutionsArchitect(solutions_architect_task):
         agent_kwargs=agent_kwargs,
         memory=memory,
     )
-
-    class Query(BaseModel):
-        query: str
-        
-    # def researchAgent(query: Query):
-    #     # query = query.query
-    #     content = agent({"input": query})
-    #     actual_content = content['output']
-    #     print(actual_content)
-    #     return actual_content
     
-    actual_content = agent({"input": solutions_architect_task})
+    # actual_content = agent({"input": solutions_architect_task})
+    actual_content = call_langchain_agent_with_retry(agent, solutions_architect_task)
     res = actual_content['output']
     return res
         
