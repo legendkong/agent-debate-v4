@@ -41,3 +41,4 @@ openai==0.28.1
 tiktoken==0.5.2
 tokenizers==0.14.1
 gunicorn==21.2.0
+tenacity==8.2.3
