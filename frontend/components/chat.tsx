@@ -905,13 +905,16 @@ export function Chat() {
       //fetch mermaid for btp expert
       const fetchMermaidDiagramBTP = async () => {
         try {
-          const response = await fetch(`${backendUrl}/api/convert_to_mermaid`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ text: finalBtpExpertOutput })
-          })
+          const response = await fetch(
+            `${backendUrl}/api/convert_to_mermaid2`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ text: finalBtpExpertOutput })
+            }
+          )
 
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`)
