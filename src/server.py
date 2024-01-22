@@ -12,12 +12,11 @@ from agents.Moderator import Moderator
 from agents.mockSAPBTPExpert import mockSAPBTPExpert
 from agents.summarizeSeniorConsultant import summarizeSeniorConsultant
 from agents.mermaidConverter import mermaidConverter
+from agents.mermaidConverter2 import mermaidConverter2
 from agents.v2Moderator import v2Moderator
 from agents.v3SAPSeniorConsultant import v3SAPSeniorConsultant
 
 app = Flask(__name__)
-# CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
-# CORS(app, resources={r"/*": {"origins": ["http://localhost:3000"]}})
  # Enable CORS for all routes
 allowed_origins = ["http://localhost:3000", "https://agent-frontend:3000", "http://agent-frontend:3000"]
 CORS(app, resources={r"/*": {"origins": allowed_origins}})
@@ -58,7 +57,6 @@ def solutions_architect():
 
     # Now we process the solutions architect task
     result = SAPSolutionsArchitect(solutions_architect_task)
-
     return jsonify({
         'solutions_architect_result': result
     })
@@ -95,11 +93,6 @@ def mock_btp_expert():
 
     # Assuming SAPBTPExpert function returns curated_final_content
     result = mockSAPBTPExpert(btp_expert_task)
-
-    # # Return the first 'Steps' from the curated_final_content
-    # first_result_key = next(iter(result))
-    # first_result_steps = result[first_result_key].get('Steps', '')
-
     return jsonify({
         'btp_expert_result': result
     })
@@ -211,6 +204,24 @@ def convert_to_mermaid():
     except Exception as e:
         print(e)
         return jsonify({'error': str(e)}), 500
+    
+# Mermaid converter 2
+@app.route('/api/convert_to_mermaid2', methods=['POST'])
+def convert_to_mermaid2():
+    # Extract the text from the request
+    data = request.json
+    text_description = data.get('text')
+
+    if not text_description:
+        return jsonify({'error': 'No text provided'}), 400
+
+    # Call the mermaidConverter function
+    try:
+        mermaidSyntax = mermaidConverter2(text_description)
+        return jsonify({'mermaidSyntax': mermaidSyntax})
+    except Exception as e:
+        print(e)
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/v2_moderator', methods=['POST'])
 def handle_v2_moderation():
@@ -219,6 +230,8 @@ def handle_v2_moderation():
     print("User input:", user_input)
 
     question_asked, answer = v2Moderator(user_input)
+    print("Question asked:", question_asked)
+    print("Answer:", answer)
 
     return jsonify({
         'question_asked': question_asked,
@@ -235,14 +248,7 @@ def api_v3_senior_consultant():
     critique_for_sa = data.get('critique_for_sa')
     critique_for_btp = data.get('critique_for_btp')
     user_question = data.get('user_question')
-    print("Original Consulting question:", consulting_question)
-    print("User question:", user_question)
-    print("Solutions architect output:", solutions_architect_output)
-    print("BTP expert output:", btp_expert_output)
-    print("Critique for SA:", critique_for_sa)
-    print("Critique for BTP:", critique_for_btp)
 
-    
     overall_feedback, needs_refinement = v3SAPSeniorConsultant(
         consulting_question,
         solutions_architect_output,
@@ -257,10 +263,10 @@ def api_v3_senior_consultant():
         'needs_refinement': needs_refinement
     })
     
-    
 
-
+# if __name__ == '__main__':
+#     app.run(host='0.0.0.0', debug=False, port=8080)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=False, port=8080)
+    app.run(host='0.0.0.0', debug=True, port=8080)
 
