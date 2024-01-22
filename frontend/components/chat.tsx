@@ -142,6 +142,10 @@ export function Chat() {
   const [mermaidSvgBTP, setMermaidSvgBTP] = useState('')
   const [mermaidErrorSA, setMermaidErrorSA] = useState('') // Error for SA
   const [mermaidErrorBTP, setMermaidErrorBTP] = useState('') // Error for BTP
+  const [summaryCount, setSummaryCount] = useState(0)
+  const [isBtpOutputUpdated, setIsBtpOutputUpdated] = useState(false)
+  const [isSAOutputUpdated, setIsSAOutputUpdated] = useState(false)
+  const [isReviewedOnce, setIsReviewedOnce] = useState(true)
   const containerRef = useRef<HTMLDivElement | null>(null)
 
   // Determine the backend URL based on the environment
@@ -152,8 +156,9 @@ export function Chat() {
 
   // useEffect hook to trigger the review when both outputs are ready
   useEffect(() => {
-    if (btpExpertOutput && saOutput) {
+    if (btpExpertOutput && saOutput && isReviewedOnce) {
       handleReviewBySeniorConsultant()
+      setIsReviewedOnce(false)
     }
   }, [btpExpertOutput, saOutput])
 
@@ -251,7 +256,6 @@ export function Chat() {
             }
 
             const data = await response.json()
-            console.log('BTP EXPERT DATA:' + data.btp_expert_result)
             setBtpExpertOutput(data.btp_expert_result)
             setRefinedBTPExpertOutput(data.btp_expert_result)
 
@@ -271,7 +275,11 @@ export function Chat() {
             setMessages((prevMessages) => [
               ...prevMessages.filter(
                 (msg) => msg.text !== `⌛️🔃 Racking my brain ... `
-              )
+              ),
+              {
+                sender: 'Error',
+                text: 'An error occurred during the BTP expert processing.'
+              }
             ])
           }
         }
@@ -308,10 +316,6 @@ export function Chat() {
             }
 
             const data = await response.json()
-            console.log(
-              'SOLUTIONS ARCHITECT DATA:',
-              data.solutions_architect_result
-            )
             setSaOutput(data.solutions_architect_result)
             setRefinedSolutionsArchitectOutput(data.solutions_architect_result)
 
@@ -347,13 +351,11 @@ export function Chat() {
 
         // Start both tasks without waiting for them to complete
         if (seniorConsultantData.btp_expert_task) {
-          console.log('Handling BTP Expert Task')
           handleBTPExpertTask(seniorConsultantData.btp_expert_task).catch(
             console.error
           )
         }
         if (seniorConsultantData.solutions_architect_task) {
-          console.log('Handling Solutions Architect Task')
           handleSolutionsArchitectTask(
             seniorConsultantData.solutions_architect_task
           ).catch(console.error)
@@ -380,8 +382,6 @@ export function Chat() {
 
   // Function to handle review by v2SAPSeniorConsultant
   const handleReviewBySeniorConsultant = async () => {
-    console.log('In handleReviewBySeniorConsultant function')
-
     // Add a loading message for Lead Consultant
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -498,6 +498,7 @@ export function Chat() {
       }
     ])
     try {
+      setPrevCritiqueForSA(critique)
       const response = await fetch(
         `${backendUrl}/api/refine_solutions_architect`,
         {
@@ -532,10 +533,15 @@ export function Chat() {
           )
         }
       ])
+      setRefinedSolutionsArchitectOutput(
+        data.refined_solutions_architect_result
+      )
       setIsSARefinementDone(true)
       setRefinedSolutionsArchitectOutput(
         data.refined_solutions_architect_result
       )
+      setSaOutput(data.refined_solutions_architect_result)
+      setIsSAOutputUpdated(true)
     } catch (error) {
       console.error('Error during Solutions Architect refinement:', error)
       setMessages((prevMessages) => [
@@ -558,6 +564,7 @@ export function Chat() {
       }
     ])
     try {
+      setPrevCritiqueForBTP(critique)
       const response = await fetch(`${backendUrl}/api/refine_btp_expert`, {
         method: 'POST',
         headers: {
@@ -578,6 +585,7 @@ export function Chat() {
       const data = await response.json()
       // Update the UI with the refined solution
       // Remove the loading message and add the actual response
+      // setBtpExpertOutput(data.refined_btp_expert_result)
       setMessages((prevMessages) => [
         ...prevMessages.filter(
           (msg) => msg.text !== '⌛️🔃 Racking my brain again ...'
@@ -587,8 +595,12 @@ export function Chat() {
           text: newFormatBTPExpertResponse(data.refined_btp_expert_result)
         }
       ])
+      // setBtpExpertOutput(data.refined_btp_expert_result)
+      const refinedBTPoutput = data.refined_btp_expert_result
       setIsBTPExpertRefinementDone(true)
       setRefinedBTPExpertOutput(data.refined_btp_expert_result)
+      setBtpExpertOutput(data.refined_btp_expert_result)
+      setIsBtpOutputUpdated(true)
     } catch (error) {
       console.error('Error during BTP Expert refinement:', error)
       setMessages((prevMessages) => [
@@ -658,16 +670,12 @@ export function Chat() {
       }
 
       const data = await response.json()
-      console.log('v2 moderator data data: ' + data)
-      // console.log('V2 MODERATOR DATA:' + [...data])
-
       // Add the user's question or statement to the chat
       setMessages((prevMessages: any) => [
         ...prevMessages,
         { sender: 'user', text: input }
       ])
       setInput('') // Clear input field
-      console.log('Is question asked? : ' + data.question_asked)
 
       if (data.question_asked) {
         // If it's a question, handle it (e.g., forward to the lead consultant)
@@ -683,7 +691,7 @@ export function Chat() {
             text: 'Alright👍, my team and I will proceed with the tasks.'
           }
         ])
-        proceedWithRefinement()
+        proceedWithRefinement(prevCritiqueForBTP, prevCritiqueForSA)
       }
     } catch (error) {
       console.error('Error during v2 moderation:', error)
@@ -726,6 +734,15 @@ export function Chat() {
       }
 
       const reviewData = await response.json()
+      // Update prevCritiqueForSA
+      const newCritiqueForSA =
+        reviewData.overall_feedback['Critique for Solutions Architect']
+      setPrevCritiqueForSA(newCritiqueForSA)
+
+      // Update prevCritiqueForBTP
+      const newCritiqueForBTP =
+        reviewData.overall_feedback['Critique for BTP Expert']
+      setPrevCritiqueForBTP(newCritiqueForBTP)
 
       // Process the response from the lead consultant
       // Update the chat with the lead consultant's response and any new critiques
@@ -735,25 +752,31 @@ export function Chat() {
         ), // Remove the loading message
         {
           sender: 'SAP Lead Consultant',
-          text: reviewData.overall_feedback['Personal statement']
+          text: `
+          <p>${reviewData.overall_feedback['Personal statement']}</p>
+          <br></br>
+          <p><strong>Critique for Solutions Architect: </strong>${reviewData.overall_feedback['Critique for Solutions Architect']}</p>
+          <br></br>
+          <p><strong>Critique for BTP Expert: </strong>${reviewData.overall_feedback['Critique for BTP Expert']}</p>
+          `
         }
       ])
 
-      // Update critiques for SA and BTP Expert if provided
-      if (reviewData.overall_feedback['Critique for Solutions Architect']) {
-        setPrevCritiqueForSA(
-          reviewData.overall_feedback['Critique for Solutions Architect']
-        )
-      }
-      if (reviewData.overall_feedback['Critique for BTP Expert']) {
-        setPrevCritiqueForBTP(
-          reviewData.overall_feedback['Critique for BTP Expert']
-        )
-      }
-
+      // // Update critiques for SA and BTP Expert if provided
+      // if (reviewData.overall_feedback['Critique for Solutions Architect']) {
+      //   setPrevCritiqueForSA(
+      //     reviewData.overall_feedback['Critique for Solutions Architect']
+      //   )
+      // }
+      // if (reviewData.overall_feedback['Critique for BTP Expert']) {
+      //   setPrevCritiqueForBTP(
+      //     reviewData.overall_feedback['Critique for BTP Expert']
+      //   )
+      // }
+      setIsLoading(false)
       // Check if refinement is needed and proceed accordingly
       if (reviewData.needs_refinement) {
-        proceedWithRefinement()
+        proceedWithRefinement(newCritiqueForSA, newCritiqueForBTP)
       }
     } catch (error) {
       console.error('Error forwarding question to Lead Consultant:', error)
@@ -767,24 +790,41 @@ export function Chat() {
     }
   }
 
-  const proceedWithRefinement = () => {
+  const proceedWithRefinement = (
+    critiqueForSA: string,
+    critiqueForBTP: string
+  ) => {
     // Implement the logic to initiate the refinement process
-    if (prevCritiqueForSA) {
-      handleSolutionsArchitectRefinement(prevCritiqueForSA)
+    if (critiqueForSA) {
+      handleSolutionsArchitectRefinement(critiqueForSA)
     }
-    if (prevCritiqueForBTP) {
-      handleBTPExpertRefinement(prevCritiqueForBTP)
+    if (critiqueForBTP) {
+      handleBTPExpertRefinement(critiqueForBTP)
     }
   }
 
   useEffect(() => {
-    if (isSARefinementDone && isBTPExpertRefinementDone) {
+    if (
+      isSARefinementDone &&
+      isBTPExpertRefinementDone &&
+      isBtpOutputUpdated &&
+      isSAOutputUpdated
+    ) {
       handleReviewBySeniorConsultant()
       // Reset the refinement flags
       setIsSARefinementDone(false)
       setIsBTPExpertRefinementDone(false)
+      setIsBtpOutputUpdated(false)
+      setIsSAOutputUpdated(false)
+    } else {
+      console.log('Waiting for all conditions to be true')
     }
-  }, [isSARefinementDone, isBTPExpertRefinementDone])
+  }, [
+    isSARefinementDone,
+    isBTPExpertRefinementDone,
+    isBtpOutputUpdated,
+    isSAOutputUpdated
+  ])
 
   useEffect(() => {
     const finalSaOutput = refinedSolutionsArchitectOutput
@@ -792,9 +832,6 @@ export function Chat() {
 
     const fetchSummary = async () => {
       // Add a loading message for the Summary
-      console.log('In fetchSummary function')
-      console.log('This is the finalSaOutput:' + finalSaOutput)
-      console.log('This is the finalBtpExpertOutput:' + finalBtpExpertOutput)
       setMessages((prevMessages) => [
         ...prevMessages,
         {
@@ -833,7 +870,7 @@ export function Chat() {
             text: formatSummaryResponse(summaryFromConsultant)
           }
         ])
-        console.log('Summarized the conversation: ' + summaryFromConsultant)
+        setSummaryCount((prevCount) => prevCount + 1)
       } catch (error) {
         console.error('Error fetching summary:', error)
         // Update messages to show error and remove the loading message
@@ -870,8 +907,6 @@ export function Chat() {
           const data = await response.json()
 
           // Use Mermaid to render the diagram
-          console.log('MERMAID SYNTAX:' + data.mermaidSyntax)
-
           if (data.mermaidSyntax) {
             // Initialize Mermaid
             mermaid.initialize({ startOnLoad: true })
@@ -884,7 +919,6 @@ export function Chat() {
                   data.mermaidSyntax
                 )
                 setMermaidSvg(svg)
-                console.log('THIS IS THE SVG' + svg)
               } catch (error) {
                 console.error('Mermaid diagram rendering error:', error)
                 setMermaidErrorSA(
@@ -923,8 +957,6 @@ export function Chat() {
           const data = await response.json()
 
           // Use Mermaid to render the diagram
-          console.log('MERMAID SYNTAX:' + data.mermaidSyntax)
-
           if (data.mermaidSyntax) {
             // Initialize Mermaid
             mermaid.initialize({ startOnLoad: true })
@@ -937,7 +969,6 @@ export function Chat() {
                   data.mermaidSyntax
                 )
                 setMermaidSvgBTP(svg)
-                console.log('THIS IS THE SVG' + svg)
               } catch (error) {
                 console.error('Mermaid diagram rendering error:', error)
                 setMermaidErrorBTP(
@@ -956,7 +987,7 @@ export function Chat() {
         }
       }
 
-      if (finalSaOutput && finalBtpExpertOutput) {
+      if (finalSaOutput && finalBtpExpertOutput && summaryCount === 0) {
         fetchMermaidDiagram()
         fetchMermaidDiagramBTP()
       }
@@ -995,35 +1026,39 @@ export function Chat() {
               {message.sender === 'Summary' ? (
                 <>
                   <div dangerouslySetInnerHTML={{ __html: message.text }} />
-                  <p className='text-blue-300 text-sm'>
-                    <br></br>
-                    <br></br>
-                    <strong>
-                      SAP Solution Architect&apos;s Mermaid diagram:
-                    </strong>
-                  </p>
-                  {mermaidSvg ? (
-                    <div
-                      dangerouslySetInnerHTML={{ __html: mermaidSvg }}
-                      className='my-4'
-                    />
-                  ) : (
-                    <p>{mermaidErrorSA}</p>
-                  )}
-                  <br></br>
-                  <br></br>
-                  <p className='text-green-300 text-sm'>
-                    <br></br>
-                    <br></br>
-                    <strong>SAP BTP Expert&apos;s Mermaid diagram:</strong>
-                  </p>
-                  {mermaidSvgBTP ? (
-                    <div
-                      dangerouslySetInnerHTML={{ __html: mermaidSvgBTP }}
-                      className='my-4'
-                    />
-                  ) : (
-                    <p>{mermaidErrorBTP}</p>
+                  {summaryCount === 1 && (
+                    <>
+                      <p className='text-blue-300 text-sm'>
+                        <br></br>
+                        <br></br>
+                        <strong>
+                          SAP Solution Architect&apos;s Mermaid diagram:
+                        </strong>
+                      </p>
+                      {mermaidSvg ? (
+                        <div
+                          dangerouslySetInnerHTML={{ __html: mermaidSvg }}
+                          className='my-4'
+                        />
+                      ) : (
+                        <p>{mermaidErrorSA}</p>
+                      )}
+                      <br></br>
+                      <br></br>
+                      <p className='text-green-300 text-sm'>
+                        <br></br>
+                        <br></br>
+                        <strong>SAP BTP Expert&apos;s Mermaid diagram:</strong>
+                      </p>
+                      {mermaidSvgBTP ? (
+                        <div
+                          dangerouslySetInnerHTML={{ __html: mermaidSvgBTP }}
+                          className='my-4'
+                        />
+                      ) : (
+                        <p>{mermaidErrorBTP}</p>
+                      )}
+                    </>
                   )}
                 </>
               ) : (
