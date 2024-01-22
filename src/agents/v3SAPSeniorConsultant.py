@@ -9,24 +9,29 @@ def v3SAPSeniorConsultant(consulting_question, solutions_architect_output, btp_e
                        
     combined_critique = f"Critique for Solutions Architect: {critique_for_sa}\n\n" \
                         f"Critique for BTP Expert: {critique_for_btp}"
-    
+                        
     # Initial review process
     review = strict_output(
         system_prompt = f'''You are a SAP lead consultant. You lead a team of two people: the Solutions Architect and the BTP expert.
-                            You are in the middle of a discussion with a customer and your team members have provided their solutions to the customer's consulting question. 
-                            You have just provided your critique and refinement requests for both the team members. However, the customer has asked a follow-up question: {user_question}.
-                            You need to address the question. The customer probably asked this question because the conversation is steering out of track. Help to steer the conversation back to the right track,
-                            and provide new critique for the team members' solutions if necessary. If you don't think that the question is neccessary and out of topic, be firm and
-                            explain to the customer why you think his question is out of topic. You should be firm yet answer politely, probably start with something like "That's a good question."
+                            The team is in a discussion with a customer, addressing a consulting question. You've critiqued the team's solutions and is now faced with a follow-up question or suggestion from the customer: "{user_question}". 
+                            Review the customer's follow-up question and assign additional critiques or refinement requests for the Solutions Architect and/or BTP expert.
+                            If the customer's input seems off-topic and completely unrelated to the original consulting question: "{consulting_question}", politely clarify why it doesn't align with the discussion. 
+                            If the solutions need refinement, provide clear feedback on what needs to be changed.
+                            Provide clear feedback to the solutions architect and btp expert on what needs to be changed, to address the customer's question.
+                            If there is no critique or refinement needed from either team member, state "No refinement needed.".
+                            For example, if there is no critique or refinement needed for the BTP expert, then "Critique for BTP Expert": "No refinement needed". 
                             
-                            Consulting question: {consulting_question}
-                            Previous critique for Solutions Architect(if any): {critique_for_sa}
-                            Previous critique for BTP Expert(if any): {critique_for_btp}
-                            Solutions Architect's solution: {solutions_architect_output}
-                            BTP Expert's solution: {btp_expert_output}''',
-        user_prompt = f'''Here are the solutions provided by the team members for the task: "{combined_summary}.
-                          Here are the critique and refinement requests you provided for the team members'solutions: "{combined_critique}.
-                          Here is the follow-up question from the customer: {user_question}"''',
+                            This is the original consulting question asked by the customer:"{consulting_question}"
+                            This is the solution provided by the Solutions Architect: "{solutions_architect_output}"
+                            This is the solution provided by the BTP Expert: "{btp_expert_output}"
+                            This was the previous critique from you to the Solutions Architect, if any: "{critique_for_sa}"
+                            This was the previous critique from you to the BTP Expert, if any: "{critique_for_btp}"
+                            This is the new follow-up customer question: "{user_question}"
+                            ''',
+                            
+        user_prompt = f'''Here are the combined solutions provided by the team members for the task: "{combined_summary}.
+                          Here are the critique and refinement requests you provided earlier for the team members'solutions: "{combined_critique}.
+                          Here is the follow-up question or suggestion from the customer: {user_question}"''',
                           
         output_format = {"Personal statement": "Your address to the customer's follow-up question.",
                          "Critique for Solutions Architect": "Feedback and refinement requests for the Solutions Architect.",

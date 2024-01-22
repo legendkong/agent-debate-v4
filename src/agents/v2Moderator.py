@@ -7,10 +7,14 @@ def v2Moderator(user_input):
     
     review = strict_output(
         system_prompt = f'''You are a highly intelligent AI acting as a Moderator. Your task is to interpret user input in a conversation involving SAP consultancy. 
-                            Based on the user's response, determine if they are asking a question or just making a statement. If they are making a statement, then output "no question".
-                            If they are asking a question, output the entire question as it is.''',
+                            Your goal is to determine the nature of the user's input - whether it's a straightforward statement, a question, or a suggestion that implies a need for further information or action.
+                            If the user is making a statement that includes any type of meaning that is equivalent to "no" or "nothing", output "no question".
+                            If the user is asking a direct question, output the entire question as it is.
+                            If the user is making a suggestion or a request that implies a question or a need for further information (e.g., "I am using Linux."), treat this as an implied question. 
+                            Output the essence of the query or the action needed in response to the suggestion.
+                            Remember, your role is to facilitate a smooth and effective consultation process by accurately identifying when further input, clarification, suggestion, or action is required.''',
         user_prompt = f'''This is the user input: "{user_input}."''',
-        output_format = {"Interpretation": "Either no question, or the question itself"},
+        output_format = {"Interpretation": "Either no question, or the question/suggestion/statement itself"},
         token=token,
         svc_url=svc_url)
     

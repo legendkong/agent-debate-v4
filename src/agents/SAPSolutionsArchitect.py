@@ -28,7 +28,7 @@ BTP_PROXY_CLIENT = BTPProxyClient()
 # Define retry strategy
 @retry(
     wait=wait_fixed(20),  # wait for 2 seconds between retries
-    stop=stop_after_attempt(5),  # give up after 5 attempts
+    stop=stop_after_attempt(7),  # give up after 5 attempts
     retry=retry_if_exception_type(Exception)  # only retry on APIError
 )
 def call_langchain_agent_with_retry(agent, task):
@@ -50,8 +50,8 @@ def call_langchain_agent_with_retry(agent, task):
 def SAPSolutionsArchitect(solutions_architect_task):
         
     load_dotenv()
-    browserless_api_key = os.getenv("BROWSERLESS_API_KEY")
     serper_api_key = os.getenv("SERP_API_KEY")
+    scrapingfish_api_key = os.getenv("SCRAPINGFISH_API_KEY")
 
     # 1. Tool for search
     def search(query):
@@ -74,15 +74,11 @@ def SAPSolutionsArchitect(solutions_architect_task):
         # scrape website, and also will summarize the content based on objective if the content is too large
         # objective is the original objective & task that user give to the agent, url is the url of the website to be scraped
 
-        print("Scraping website...")
-        # Define the headers for the request
-        headers = {
-            'Cache-Control': 'no-cache',
-            'Content-Type': 'application/json',
-        }
+        print("Scraping website for solutions architect...")
 
         # Define the data to be sent in the request
         data = {
+            "api_key": scrapingfish_api_key,
             "url": url
         }
 
@@ -90,8 +86,7 @@ def SAPSolutionsArchitect(solutions_architect_task):
         data_json = json.dumps(data)
 
         # Send the POST request
-        post_url = f"https://chrome.browserless.io/content?token={browserless_api_key}"
-        response = requests.post(post_url, headers=headers, data=data_json)
+        response = requests.get("https://scraping.narf.ai/api/v1/", params=data)
 
         # Check the response status code
         if response.status_code == 200:
