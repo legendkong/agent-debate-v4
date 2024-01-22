@@ -24,5 +24,5 @@ def mermaidConverter(text_description):
                             svc_url=svc_url)
  
    mermaidSyntax = res['mermaidSyntax']
-   print(mermaidSyntax)
+#    print(mermaidSyntax)
    return mermaidSyntax
