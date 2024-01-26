@@ -1,13 +1,7 @@
 import os
 from config.dependencies import *
 from dotenv import load_dotenv
-from config.config import keyword_list, unwanted_url, max_url_per_site, num_google_queries, twenty, output_format, base_index
-from utils.webdriver_util import start_driver
-from utils.openai_util import strict_output
-from utils.scraping_util import extract_unique_urls, get_root_url, spaced_text, view_url
-from agents.SAPBTPExpert import SAPBTPExpert
 from agents.SAPSeniorConsultant import SAPSeniorConsultant
-from agents.SAPSolutionsArchitect import SAPSolutionsArchitect
 
 # Definition of a topic to be discussed
 # topic = """
@@ -25,8 +19,7 @@ api_key = os.getenv('CUSTOM_JSON_API_KEY')
 cx = os.getenv('GOOGLE_PROGRAMMABLE_SEARCH_ENGINE')
 
 def main():
-    btp_expert_task, solutions_architect_task = SAPSeniorConsultant()
-    SAPBTPExpert(btp_expert_task)
+    btp_expert_task = SAPSeniorConsultant()
     # SAPSolutionsArchitect(solutions_architect_task)
     
     
