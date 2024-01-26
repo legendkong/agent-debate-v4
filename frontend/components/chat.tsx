@@ -152,7 +152,7 @@ export function Chat() {
   const backendUrl =
     process.env.NODE_ENV === 'development'
       ? 'http://localhost:8080'
-      : 'https://agent-debate-backend.c-290ae5b.kyma.shoot.live.k8s-hana.ondemand.com'
+      : 'https://agent-debate-frontend.c-290ae5b.kyma.shoot.live.k8s-hana.ondemand.com/agent-backend'
 
   // useEffect hook to trigger the review when both outputs are ready
   useEffect(() => {
