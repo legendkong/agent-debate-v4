@@ -4,7 +4,6 @@ from flask_cors import CORS
 # import agents
 from agents.SAPSeniorConsultant import SAPSeniorConsultant
 from agents.SAPSolutionsArchitect import SAPSolutionsArchitect
-from agents.SAPBTPExpert import SAPBTPExpert
 from agents.v2SAPSeniorConsultant import v2SAPSeniorConsultant
 from agents.v2SAPSolutionsArchitect import v2SAPSolutionsArchitect
 from agents.v2SAPBTPExpert import v2SAPBTPExpert
@@ -61,27 +60,7 @@ def solutions_architect():
         'solutions_architect_result': result
     })
     
-# BTP expert response
-@app.route('/api/btp_expert', methods=['POST'])
-def btp_expert():
-    data = request.get_json()
-    btp_expert_task = data.get('btp_expert_task')
 
-    if not btp_expert_task:
-        return jsonify({"error": "No btp expert task provided"}), 400
-
-    # Assuming SAPBTPExpert function returns curated_final_content
-    result = SAPBTPExpert(btp_expert_task)
-
-    # Return the first 'Steps' from the curated_final_content
-    first_result_key = next(iter(result))
-    first_result_steps = result[first_result_key].get('Steps', '')
-
-    return jsonify({
-        'btp_expert_result': first_result_steps
-    })
-    
-# ******************** FOR FASTER TESTING ******************* #
 # MOCK BTP expert response
 @app.route('/api/mock_btp_expert', methods=['POST'])
 def mock_btp_expert():
@@ -264,9 +243,5 @@ def api_v3_senior_consultant():
     })
     
 
-# if __name__ == '__main__':
-#     app.run(host='0.0.0.0', debug=False, port=8080)
-
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True, port=8080)
-
