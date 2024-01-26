@@ -45,7 +45,7 @@ spec:
         app: agent-backend
     spec:
       containers:
-        - image: jonathankong/agent-backend:v10 # Ensure this points to your backend image
+        - image: jonathankong/agent-backend:v11 # Ensure this points to your backend image
           name: agent-backend
           ports:
             - name: http

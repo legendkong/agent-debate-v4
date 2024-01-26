@@ -1,0 +1,344 @@
+---
+# ServiceInstance for xsuaa
+apiVersion: services.cloud.sap.com/v1alpha1
+kind: ServiceInstance
+metadata:
+  name: agent-debate-v4-xsuaa-service-instance
+  namespace: agent-debate-v4
+spec:
+  serviceOfferingName: xsuaa
+  servicePlanName: application
+  parameters:
+    xsappname: agent-debate-v4-xsuaa-app
+    tenant-mode: dedicated # define the application provider tenant as a shared tenant
+    description: Security profile of called application
+    scopes:
+      - name: $XSAPPNAME.Restricted
+        description: Restricted Access
+      - name: $XSAPPNAME.Full
+        description: Full Access
+    attributes:
+      - name: Models
+        description: Generative AI Models
+        valueType: string
+      - name: Features
+        description: Features of Application
+        valueType: string
+    role-templates:
+      - name: General
+        description: General User
+        scope-references:
+          - $XSAPPNAME.Restricted
+        attribute-references:
+          - Models
+          - Features
+      - name: Internal
+        description: Internal User
+        scope-references:
+          - $XSAPPNAME.Full
+        attribute-references:
+          - Models
+          - Features
+    oauth2-configuration:
+      redirect-uris:
+        - 'https://agent-debate-frontend.c-290ae5b.kyma.shoot.live.k8s-hana.ondemand.com/**'
+        - 'http://localhost:3000/**'
+---
+# ServiceBinding for xsuaa
+apiVersion: services.cloud.sap.com/v1alpha1
+kind: ServiceBinding
+metadata:
+  name: agent-debate-v4-xsuaa-service-binding
+  namespace: agent-debate-v4
+spec:
+  serviceInstanceName: agent-debate-v4-xsuaa-service-instance
+  secretName: agent-debate-v4-xsuaa-service-binding-secret
+---
+# ServiceAccount for xsuaa
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: agent-debate-v4-xsuaa-sa
+  namespace: agent-debate-v4
+---
+#  Deployment of the backend application
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: agent-backend
+  name: agent-backend
+  namespace: agent-debate-v4
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agent-backend
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: agent-backend
+        version: v1
+    spec:
+      serviceAccountName: agent-debate-v4-xsuaa-sa
+      containers:
+        - image: jonathankong/agent-backend:v11 # Ensure this points to your backend image
+          imagePullPolicy: Always
+          name: agent-backend
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom: # Ensure this matches the secret name you created earlier
+            - secretRef:
+                name: env-secrets
+          env:
+            - name: PYTHONUNBUFFERED
+              value: '1'
+          resources:
+            limits:
+              cpu: 500m
+              memory: 2Gi
+            requests:
+              cpu: 500m
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false
+
+---
+# Service for backend
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: agent-backend
+  name: agent-backend
+  namespace: agent-debate-v4
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+  selector:
+    app: agent-backend
+---
+# Deployment of the frontend application
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: agent-frontend
+  name: agent-frontend
+  namespace: agent-debate-v4
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agent-frontend
+  template:
+    metadata:
+      labels:
+        app: agent-frontend
+    spec:
+      containers:
+        - image: jonathankong/agent-frontend:v11 # Point to your frontend image
+          name: agent-frontend
+          ports:
+            - name: http
+              containerPort: 3000 # Ensure this matches the port your frontend listens on
+          resources:
+            limits:
+              cpu: 500m
+              memory: 2Gi
+            requests:
+              cpu: 500m
+              memory: 2Gi
+
+---
+# Service for the frontend
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: agent-frontend
+  name: agent-frontend
+  namespace: agent-debate-v4
+spec:
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
+  selector:
+    app: agent-frontend
+
+---
+# AppRouter Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: agent-debate-v4-approuter
+  name: agent-debate-v4-approuter
+  namespace: agent-debate-v4
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agent-debate-v4-approuter
+  template:
+    metadata:
+      labels:
+        app: agent-debate-v4-approuter
+    spec:
+      volumes:
+        - name: xs-app
+          configMap:
+            name: agent-debate-v4-xs-app-configmap
+        - name: agent-debate-v4-xsuaa-service-binding
+          secret:
+            secretName: agent-debate-v4-xsuaa-service-binding-secret
+      containers:
+        - image: sapse/approuter:16.0.1
+          name: agent-debate-v4-approuter
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          volumeMounts:
+            - name: xs-app
+              mountPath: /app/xs-app.json
+              subPath: xs-app.json
+              readOnly: true
+            - name: agent-debate-v4-xsuaa-service-binding
+              mountPath: /etc/secrets/sapcp/xsuaa/agent-debate-v4-xsuaa-service-instance
+              readOnly: true
+          env:
+            - name: destinations
+              valueFrom:
+                configMapKeyRef:
+                  name: agent-debate-v4-destinations-configmap
+                  key: destinations
+---
+# Destinationrule for frontend service
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: agent-debate-v4-frontend-destrule
+  namespace: agent-debate-v4
+spec:
+  host: agent-frontend
+  trafficPolicy:
+    loadBalancer:
+      consistentHash:
+        httpCookie:
+          name: JSESSIONID
+          path: /
+          ttl: 0s
+---
+# Destinationrule for backend service
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: agent-debate-v4-backend-destrule
+  namespace: agent-debate-v4
+spec:
+  host: agent-backend
+  trafficPolicy:
+    loadBalancer:
+      consistentHash:
+        httpCookie:
+          name: JSESSIONID
+          path: /
+          ttl: 0s
+---
+# Service for the AppRouter
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: agent-debate-v4-approuter
+  name: agent-debate-v4-approuter
+  namespace: agent-debate-v4
+spec:
+  ports:
+    - port: 5000
+      protocol: TCP
+      targetPort: 5000
+  selector:
+    app: agent-debate-v4-approuter
+---
+# ConfigMaps for the AppRouter
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent-debate-v4-destinations-configmap
+  namespace: agent-debate-v4
+data:
+  destinations: >-
+    [
+        {
+          "name": "agent-backend",
+          "url": "http://agent-backend:8080",
+          "forwardAuthToken": true,
+          "timeout": 900000
+        },
+        {
+          "name": "agent-frontend",
+          "url": "http://agent-frontend:3000",
+          "forwardAuthToken": true,
+          "timeout": 900000
+        }
+    ]
+---
+# ConfigMap for xs-app.json
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent-debate-v4-xs-app-configmap
+  namespace: agent-debate-v4
+data:
+  xs-app.json: |-
+    {
+        "authenticationMethod": "route",
+        "sessionTimeout": 900000,
+        "login" : {
+          "callbackEndpoint": "/callback/v1/authorization"
+        },
+        "routes": [
+            {
+                "source": "^/agent-backend/(.*)$",
+                "destination": "agent-backend",
+                "target": "$1",
+                "authenticationType": "xsuaa",
+                "csrfProtection": false
+            },
+            {
+                "source": "^/(.*)$",
+                "destination": "agent-frontend",
+                "target": "$1",
+                "authenticationType": "xsuaa",
+                "csrfProtection": false
+            }
+        ]
+    }
+---
+# APIRule for the AppRouter
+apiVersion: gateway.kyma-project.io/v1beta1
+kind: APIRule
+metadata:
+  labels:
+    app: agent-debate-v4-approuter
+  name: agent-debate-v4-approuter
+  namespace: agent-debate-v4
+spec:
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  host: agent-debate-frontend
+  rules:
+    - path: /.*
+      methods: ['GET', 'POST', 'PUT', 'DELETE']
+      service:
+        name: agent-debate-v4-approuter
+        port: 5000
+      accessStrategies:
+        - handler: allow
