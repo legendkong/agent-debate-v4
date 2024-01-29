@@ -18,12 +18,13 @@ import json
 from langchain.schema import SystemMessage
 from llm_commons.langchain.proxy import init_llm
 from llm_commons.proxy.base import set_proxy_version
-set_proxy_version('btp') # for an BTP proxy
-from llm_commons.btp_llm.identity import BTPProxyClient
+from llm_commons.proxy.identity import AICoreProxyClient
 from tenacity import retry, wait_fixed, stop_after_attempt, retry_if_exception_type
+import llm_commons.proxy.base
+llm_commons.proxy.base.proxy_version = 'aicore'
 
-
-BTP_PROXY_CLIENT = BTPProxyClient()
+set_proxy_version('aicore') # for an AI core proxy  
+aicore_proxy_client = AICoreProxyClient()
 
 # Define retry strategy
 @retry(
@@ -41,14 +42,8 @@ def call_langchain_agent_with_retry(agent, task):
         # Reraise the exception to trigger the retry
         raise
 
-
-###############################
-# SAP Solutions Architect using langchain
-###############################
-
-
 def SAPSolutionsArchitect(solutions_architect_task):
-        
+          
     load_dotenv()
     serper_api_key = os.getenv("SERP_API_KEY")
     scrapingfish_api_key = os.getenv("SCRAPINGFISH_API_KEY")
@@ -103,9 +98,7 @@ def SAPSolutionsArchitect(solutions_architect_task):
 
     def summary(solutions_architect_task, content):
        
-
-        # llm = ChatOpenAI(temperature=0, deployment_id="gpt-4-32k")
-        llm = init_llm(model_name='gpt-4-32k',deployment_id='gpt-4-32k', auth_url='',proxy_client=BTP_PROXY_CLIENT, temperature=0, max_tokens=5000)
+        llm = init_llm(model_name='gpt-4-32k', proxy_client=aicore_proxy_client, temperature=0, max_tokens=5000)
 
         text_splitter = RecursiveCharacterTextSplitter(
             separators=["\n\n", "\n"], chunk_size=10000, chunk_overlap=500)
@@ -186,7 +179,7 @@ def SAPSolutionsArchitect(solutions_architect_task):
     }
 
     # llm = ChatOpenAI(temperature=0, deployment_id='gpt-4-32k')
-    llm = init_llm(model_name='gpt-4-32k', deployment_id='gpt-4-32k', proxy_client=BTP_PROXY_CLIENT ,temperature=0, max_tokens=5000, top_p=1)
+    llm = init_llm(model_name='gpt-4-32k', proxy_client=aicore_proxy_client ,temperature=0, max_tokens=5000)
     memory = ConversationSummaryBufferMemory(
         memory_key="memory", return_messages=True, llm=llm, max_token_limit=5000)
 

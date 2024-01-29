@@ -14,15 +14,16 @@ from bs4 import BeautifulSoup
 import requests
 import json
 from langchain.schema import SystemMessage
-from llm_commons.langchain.proxy import ChatOpenAI
 from llm_commons.proxy.base import set_proxy_version
-set_proxy_version('btp') # for an AI Core proxy
-from llm_commons.btp_llm.identity import BTPProxyClient
+from llm_commons.proxy.identity import AICoreProxyClient
 from llm_commons.langchain.proxy import init_llm
 from tenacity import retry, wait_fixed, stop_after_attempt, retry_if_exception_type
+import llm_commons.proxy.base
+llm_commons.proxy.base.proxy_version = 'aicore'
+from llm_commons.langchain.proxy import ChatOpenAI
 
-
-BTP_PROXY_CLIENT = BTPProxyClient()
+set_proxy_version('aicore') # for an AI Core proxy
+aicore_proxy_client = AICoreProxyClient()
 
 # Define retry strategy
 @retry(
@@ -42,9 +43,9 @@ def call_langchain_agent_with_retry(agent, task):
 
 
 def mockSAPBTPExpert(btp_expert_task):
-        
+    
+    
     load_dotenv()
-    browserless_api_key = os.getenv("BROWSERLESS_API_KEY")
     serper_api_key = os.getenv("SERP_API_KEY")
     scrapingfish_api_key = os.getenv("SCRAPINGFISH_API_KEY")
 
@@ -69,7 +70,7 @@ def mockSAPBTPExpert(btp_expert_task):
         # scrape website, and also will summarize the content based on objective if the content is too large
         # objective is the original objective & task that user give to the agent, url is the url of the website to be scraped
 
-        print("Scraping website...")
+        print("Scraping website for btp expert...")
         # Define the headers for the request
         # Define the data to be sent in the request
         data = {
@@ -101,7 +102,7 @@ def mockSAPBTPExpert(btp_expert_task):
     def summary(btp_expert_task, content):
         
         # llm = ChatOpenAI(temperature=0, deployment_id="gpt-4-32k")
-        llm = init_llm(model_name='gpt-4-32k',deployment_id='gpt-4-32k', auth_url='',proxy_client=BTP_PROXY_CLIENT, temperature=0, max_tokens=5000, top_p=1)
+        llm = init_llm(model_name='gpt-4-32k', proxy_client=aicore_proxy_client, temperature=0, max_tokens=5000)
 
         text_splitter = RecursiveCharacterTextSplitter(
             separators=["\n\n", "\n"], chunk_size=10000, chunk_overlap=500)
@@ -182,7 +183,7 @@ def mockSAPBTPExpert(btp_expert_task):
     }
 
     # llm = ChatOpenAI(temperature=0, deployment_id='gpt-4-32k')
-    llm = init_llm(model_name='gpt-4-32k', deployment_id='gpt-4-32k', proxy_client=BTP_PROXY_CLIENT ,temperature=0, max_tokens=5000, top_p=1)
+    llm = init_llm(model_name='gpt-4-32k', proxy_client=aicore_proxy_client ,temperature=0, max_tokens=5000)
     memory = ConversationSummaryBufferMemory(
         memory_key="memory", return_messages=True, llm=llm, max_token_limit=5000)
 

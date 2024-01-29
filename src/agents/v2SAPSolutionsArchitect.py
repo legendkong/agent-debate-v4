@@ -14,14 +14,13 @@ from bs4 import BeautifulSoup
 import requests
 import json
 from langchain.schema import SystemMessage
-from llm_commons.langchain.proxy import ChatOpenAI
 from llm_commons.proxy.base import set_proxy_version
-set_proxy_version('btp') # for an AI Core proxy
-from llm_commons.btp_llm.identity import BTPProxyClient
+from llm_commons.proxy.identity import AICoreProxyClient
 from llm_commons.langchain.proxy import init_llm
 from tenacity import retry, wait_fixed, stop_after_attempt, retry_if_exception_type
 
-BTP_PROXY_CLIENT = BTPProxyClient()
+set_proxy_version('aicore') # for an AI Core proxy
+aicore_proxy_client = AICoreProxyClient()
 
 # Define retry strategy
 @retry(
@@ -75,7 +74,7 @@ def v2SAPSolutionsArchitect(previous_solution, critique, solutions_architect_tas
         # scrape website, and also will summarize the content based on objective if the content is too large
         # objective is the original objective & task that user give to the agent, url is the url of the website to be scraped
 
-        print("Scraping website...")
+        print("Scraping website to refine Solutions Architect solutions...")
         # Define the data to be sent in the request
         data = {
             "api_key": scrapingfish_api_key,
@@ -92,7 +91,6 @@ def v2SAPSolutionsArchitect(previous_solution, critique, solutions_architect_tas
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, "html.parser")
             text = soup.get_text()
-            # print("CONTENTTTTTT:", text)
 
             if len(text) > 20000:
                 output = summary(objective, text)
@@ -104,7 +102,6 @@ def v2SAPSolutionsArchitect(previous_solution, critique, solutions_architect_tas
 
 
     def summary(critique, content):
-        # llm = ChatOpenAI(temperature=0, deployment_id="gpt-4-32k")
         llm = init_llm('gpt-4-32k', temperature=0, max_tokens=5000)
 
         text_splitter = RecursiveCharacterTextSplitter(

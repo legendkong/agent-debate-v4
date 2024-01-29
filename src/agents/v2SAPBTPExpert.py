@@ -14,14 +14,13 @@ from bs4 import BeautifulSoup
 import requests
 import json
 from langchain.schema import SystemMessage
-from llm_commons.langchain.proxy import ChatOpenAI
 from llm_commons.proxy.base import set_proxy_version
-set_proxy_version('btp') # for an AI Core proxy
-from llm_commons.btp_llm.identity import BTPProxyClient
+from llm_commons.proxy.identity import AICoreProxyClient
 from llm_commons.langchain.proxy import init_llm
 from tenacity import retry, wait_fixed, stop_after_attempt, retry_if_exception_type
 
-BTP_PROXY_CLIENT = BTPProxyClient()
+set_proxy_version('aicore') # for an AI Core proxy
+aicore_proxy_client = AICoreProxyClient()
 
 # Define retry strategy
 @retry(
@@ -73,7 +72,7 @@ def v2SAPBTPExpert(previous_solution, critique, btp_expert_task):
         # scrape website, and also will summarize the content based on objective if the content is too large
         # objective is the original objective & task that user give to the agent, url is the url of the website to be scraped
 
-        print("Scraping website for BTP Expert...")
+        print("Scraping website to refine BTP Expert solutions...")
 
         # Define the data to be sent in the request
         data = {
