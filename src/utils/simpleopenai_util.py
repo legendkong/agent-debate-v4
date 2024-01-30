@@ -1,18 +1,13 @@
-import openai
-import os
-from config.dependencies import *
-from dotenv import load_dotenv
 
-load_dotenv()
-openai.api_key = os.getenv('OPENAI_API_TOKEN')
+from llm_commons.proxy.identity import AICoreProxyClient
+from llm_commons.langchain.proxy import ChatOpenAI
+from langchain.schema.messages import HumanMessage
+import llm_commons.proxy.base
+llm_commons.proxy.base.proxy_version = 'aicore'
+messages = [
+    HumanMessage(content="Are you gpt 4 or gpt 3?"),
+]
 
-def simple_output(system_prompt, user_prompt, model='gpt-3.5-turbo', temperature=0):
-    response = openai.ChatCompletion.create(
-        temperature = temperature,
-        model=model,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": str(user_prompt)}
-        ]
-    )
-    return response['choices'][0]['message']['content']
+aic_proxy_client = AICoreProxyClient()
+aic_llm = ChatOpenAI(proxy_client=aic_proxy_client, proxy_model_name='gpt-4-32k')
+print(aic_llm.invoke(messages))
