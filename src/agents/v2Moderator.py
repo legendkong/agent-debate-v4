@@ -1,6 +1,5 @@
 from utils.openai_util import strict_output
 from config.loadllm import token, svc_url
-from config.dependencies import *
 import re
 
 def v2Moderator(user_input):

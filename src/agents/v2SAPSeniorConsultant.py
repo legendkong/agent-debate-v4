@@ -1,6 +1,5 @@
 from utils.openai_util import strict_output
 from config.loadllm import token, svc_url
-from config.dependencies import *
 
 def v2SAPSeniorConsultant(consulting_question, solutions_architect_output, btp_expert_output, critique_for_sa, critique_for_btp):
     # """

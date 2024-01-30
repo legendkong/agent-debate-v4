@@ -1,4 +1,3 @@
-from config.dependencies import *
 from utils.openai_util import strict_output
 from config.loadllm import token, svc_url
 

@@ -1,5 +1,3 @@
-from config.dependencies import *
-
 def Moderator(refinement_needed, refinement_count):
     """
     Determine if the conversation should be concluded based on refinement needs and count.
